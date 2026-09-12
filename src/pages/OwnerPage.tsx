@@ -184,6 +184,10 @@ function RecordsTab({
   const [editing, setEditing] = useState<SalesRecord | null>(null);
   const [creating, setCreating] = useState(false);
   const [newCastId, setNewCastId] = useState(casts[0]?.id ?? '');
+
+  useEffect(() => {
+    if (!newCastId && casts.length > 0) setNewCastId(casts[0].id);
+  }, [casts, newCastId]);
   const [newDate, setNewDate] = useState(todayString());
   const [filterCast, setFilterCast] = useState('');
 
@@ -351,34 +355,57 @@ function CastsTab({ casts }: { casts: Cast[] }) {
       </div>
       <div style={{ display: 'grid', gap: 10 }}>
         {casts.map((c) => (
-          <div key={c.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-            <input
-              className="field-input"
-              style={{ maxWidth: 200 }}
-              value={c.name}
-              onChange={(e) => updateCast(c.id, { name: e.target.value })}
-            />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <input
-                className="field-input"
-                style={{ width: 90 }}
-                type="number"
-                value={Math.round(c.commissionRate * 100)}
-                onChange={(e) => updateCast(c.id, { commissionRate: Number(e.target.value) / 100 })}
-              />
-              <span>%</span>
-            </div>
-            <Toggle checked={c.active} onChange={(v) => updateCast(c.id, { active: v })} label="有効" />
-            <button
-              className="btn btn-danger"
-              style={{ marginLeft: 'auto' }}
-              onClick={() => deleteCast(c.id)}
-            >
-              削除
-            </button>
-          </div>
+          <CastRow key={c.id} cast={c} />
         ))}
       </div>
+    </div>
+  );
+}
+
+function CastRow({ cast }: { cast: Cast }) {
+  const [name, setName] = useState(cast.name);
+  const [rate, setRate] = useState(String(Math.round(cast.commissionRate * 100)));
+
+  useEffect(() => setName(cast.name), [cast.name]);
+  useEffect(() => setRate(String(Math.round(cast.commissionRate * 100))), [cast.commissionRate]);
+
+  return (
+    <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+      <input
+        className="field-input"
+        style={{ maxWidth: 200 }}
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onBlur={() => {
+          if (name.trim() && name !== cast.name) updateCast(cast.id, { name: name.trim() });
+        }}
+      />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <input
+          className="field-input"
+          style={{ width: 90 }}
+          type="number"
+          min="0"
+          max="100"
+          value={rate}
+          onChange={(e) => setRate(e.target.value)}
+          onBlur={() => {
+            const n = Number(rate);
+            if (!Number.isNaN(n) && n !== Math.round(cast.commissionRate * 100)) {
+              updateCast(cast.id, { commissionRate: n / 100 });
+            }
+          }}
+        />
+        <span>%</span>
+      </div>
+      <Toggle checked={cast.active} onChange={(v) => updateCast(cast.id, { active: v })} label="有効" />
+      <button
+        className="btn btn-danger"
+        style={{ marginLeft: 'auto' }}
+        onClick={() => deleteCast(cast.id)}
+      >
+        削除
+      </button>
     </div>
   );
 }
@@ -412,19 +439,32 @@ function StoresTab({ stores }: { stores: Store[] }) {
       </div>
       <div style={{ display: 'grid', gap: 10 }}>
         {stores.map((s) => (
-          <div key={s.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <input
-              className="field-input"
-              style={{ maxWidth: 220 }}
-              value={s.name}
-              onChange={(e) => updateStore(s.id, { name: e.target.value })}
-            />
-            <button className="btn btn-danger" style={{ marginLeft: 'auto' }} onClick={() => deleteStore(s.id)}>
-              削除
-            </button>
-          </div>
+          <StoreRow key={s.id} store={s} />
         ))}
       </div>
+    </div>
+  );
+}
+
+function StoreRow({ store }: { store: Store }) {
+  const [name, setName] = useState(store.name);
+
+  useEffect(() => setName(store.name), [store.name]);
+
+  return (
+    <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+      <input
+        className="field-input"
+        style={{ maxWidth: 220 }}
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onBlur={() => {
+          if (name.trim() && name !== store.name) updateStore(store.id, { name: name.trim() });
+        }}
+      />
+      <button className="btn btn-danger" style={{ marginLeft: 'auto' }} onClick={() => deleteStore(store.id)}>
+        削除
+      </button>
     </div>
   );
 }

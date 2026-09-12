@@ -89,13 +89,13 @@ export function subscribeAllSalesRecords(cb: (records: SalesRecord[]) => void) {
 }
 
 export function subscribeCastSalesRecords(castId: string, cb: (records: SalesRecord[]) => void) {
-  const q = query(
-    collection(db, 'salesRecords'),
-    where('castId', '==', castId),
-    orderBy('date', 'desc')
-  );
+  // where + orderBy の組み合わせはFirestoreの複合インデックス作成が必要になり、
+  // 未作成の場合エラーになるため、orderByは使わずクライアント側で並び替える。
+  const q = query(collection(db, 'salesRecords'), where('castId', '==', castId));
   return onSnapshot(q, (snap) => {
-    cb(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<SalesRecord, 'id'>) })));
+    const records = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<SalesRecord, 'id'>) }));
+    records.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+    cb(records);
   });
 }
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { PaymentMethod, SalesRecord, Store } from '../types';
 import Toggle from './Toggle';
 
@@ -22,6 +22,10 @@ interface Props {
 
 export default function SalesRecordForm({ stores, initial, onSubmit, onCancel, onDelete }: Props) {
   const [storeId, setStoreId] = useState(initial?.storeId ?? stores[0]?.id ?? '');
+
+  useEffect(() => {
+    if (!storeId && stores.length > 0) setStoreId(stores[0].id);
+  }, [stores, storeId]);
   const [treatmentAmount, setTreatmentAmount] = useState(String(initial?.treatmentAmount ?? ''));
   const [optionAmount, setOptionAmount] = useState(String(initial?.optionAmount ?? '0'));
   const [pointsUsed, setPointsUsed] = useState(String(initial?.pointsUsed ?? '0'));
@@ -40,7 +44,7 @@ export default function SalesRecordForm({ stores, initial, onSubmit, onCancel, o
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!storeId || treatment <= 0) return;
+    if (!storeId || treatment <= 0 || payment < 0) return;
     setSaving(true);
     try {
       await onSubmit({
@@ -80,6 +84,7 @@ export default function SalesRecordForm({ stores, initial, onSubmit, onCancel, o
           className="field-input"
           type="number"
           inputMode="numeric"
+          min="0"
           value={treatmentAmount}
           onChange={(e) => setTreatmentAmount(e.target.value)}
           placeholder="0"
@@ -93,6 +98,7 @@ export default function SalesRecordForm({ stores, initial, onSubmit, onCancel, o
           className="field-input"
           type="number"
           inputMode="numeric"
+          min="0"
           value={optionAmount}
           onChange={(e) => setOptionAmount(e.target.value)}
           placeholder="0"
@@ -110,6 +116,7 @@ export default function SalesRecordForm({ stores, initial, onSubmit, onCancel, o
           className="field-input"
           type="number"
           inputMode="numeric"
+          min="0"
           value={pointsUsed}
           onChange={(e) => setPointsUsed(e.target.value)}
           placeholder="0"
