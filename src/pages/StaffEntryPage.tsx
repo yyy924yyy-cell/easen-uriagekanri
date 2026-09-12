@@ -13,6 +13,7 @@ import type { SalesRecord, Store, Cast } from '../types';
 import Header from '../components/Header';
 import SalesRecordForm, { type SalesRecordFormValue } from '../components/SalesRecordForm';
 import SalesRecordDetail from '../components/SalesRecordDetail';
+import FloatingTopButton from '../components/FloatingTopButton';
 
 type Mode = 'list' | 'new' | 'view' | 'edit';
 
@@ -59,6 +60,7 @@ export default function StaffEntryPage() {
             }}
           />
         </div>
+        <FloatingTopButton onClick={() => setSelectedCastId(null)} />
       </div>
     );
   }
@@ -76,6 +78,7 @@ export default function StaffEntryPage() {
             onBack={() => setMode('list')}
           />
         </div>
+        <FloatingTopButton onClick={() => setSelectedCastId(null)} />
       </div>
     );
   }
@@ -103,6 +106,7 @@ export default function StaffEntryPage() {
             }}
           />
         </div>
+        <FloatingTopButton onClick={() => setSelectedCastId(null)} />
       </div>
     );
   }
@@ -140,6 +144,7 @@ export default function StaffEntryPage() {
           ))}
         </div>
       </div>
+      <FloatingTopButton onClick={() => setSelectedCastId(null)} />
     </div>
   );
 }
