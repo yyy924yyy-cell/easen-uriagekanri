@@ -1,0 +1,78 @@
+rules_version = '2';
+
+// 易苑 売上管理 Firestoreセキュリティルール
+// -----------------------------------------------------------------------
+// ユーザーは2名のみ(owner@easen.local / staff@easen-uriagekanri.local)。
+//
+// 権限方針:
+// - オーナー: casts / stores / settings / salesRecords すべて読み書き自由
+// - スタッフ(共有アカウント): casts / stores は閲覧のみ（入力画面用）。
+//   salesRecordsは全件閲覧できるが、作成・更新・削除は
+//   「日本時間で当日の日付」のレコードに限る。
+//   ※スタッフは全員で1つのログインアカウントを共有しているため、
+//   「自分のキャスト分だけ閲覧できる」制限はデータベースのルールでは
+//   実現できません（アプリ画面側で選択中のキャストのデータのみ表示・
+//   絞り込みをする形で対応しています）。より厳密に分離したい場合は、
+//   スタッフ一人ひとりに個別のログインアカウントを発行する必要があります。
+// -----------------------------------------------------------------------
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner() {
+      return isSignedIn() && request.auth.token.email == 'owner@easen.local';
+    }
+    function isStaff() {
+      return isSignedIn() && request.auth.token.email == 'staff@easen-uriagekanri.local';
+    }
+
+    // 'YYYY-MM-DD' 形式の文字列が、日本時間での「今日」と一致するか判定
+    function isTodayJst(dateStr) {
+      let jst = request.time + duration.value(9, 'h');
+      let parts = dateStr.split('-');
+      return int(parts[0]) == jst.year() &&
+        int(parts[1]) == jst.month() &&
+        int(parts[2]) == jst.day();
+    }
+
+    match /casts/{castId} {
+      allow read: if isSignedIn();
+      allow write: if isOwner();
+    }
+
+    match /stores/{storeId} {
+      allow read: if isSignedIn();
+      allow write: if isOwner();
+    }
+
+    match /settings/{settingId} {
+      allow read: if isOwner();
+      allow write: if isOwner();
+    }
+
+    match /salesRecords/{recordId} {
+      allow read: if isSignedIn();
+
+      allow create: if isOwner() ||
+        (isStaff() &&
+         request.resource.data.createdBy == 'staff' &&
+         isTodayJst(request.resource.data.date));
+
+      allow update: if isOwner() ||
+        (isStaff() &&
+         resource.data.createdBy == 'staff' &&
+         isTodayJst(resource.data.date) &&
+         resource.data.date == request.resource.data.date);
+
+      allow delete: if isOwner() ||
+        (isStaff() &&
+         resource.data.createdBy == 'staff' &&
+         isTodayJst(resource.data.date));
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
