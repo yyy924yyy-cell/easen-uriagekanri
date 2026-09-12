@@ -12,14 +12,17 @@ import {
 import type { SalesRecord, Store, Cast } from '../types';
 import Header from '../components/Header';
 import SalesRecordForm, { type SalesRecordFormValue } from '../components/SalesRecordForm';
+import SalesRecordDetail from '../components/SalesRecordDetail';
+
+type Mode = 'list' | 'new' | 'view' | 'edit';
 
 export default function StaffEntryPage() {
   const { selectedCastId, setSelectedCastId } = useAuth();
   const [records, setRecords] = useState<SalesRecord[]>([]);
   const [stores, setStores] = useState<Store[]>([]);
   const [casts, setCasts] = useState<Cast[]>([]);
-  const [mode, setMode] = useState<'list' | 'new' | 'edit'>('list');
-  const [editing, setEditing] = useState<SalesRecord | null>(null);
+  const [mode, setMode] = useState<Mode>('list');
+  const [selected, setSelected] = useState<SalesRecord | null>(null);
 
   useEffect(() => subscribeStores(setStores), []);
   useEffect(() => subscribeCasts(setCasts), []);
@@ -60,23 +63,40 @@ export default function StaffEntryPage() {
     );
   }
 
-  if (mode === 'edit' && editing) {
+  if (mode === 'view' && selected) {
     return (
       <div>
-        <Header title={`${castName} さん・入力内容を修正`} onBack={() => setMode('list')} />
+        <Header title={`${castName} さん・記録の詳細`} onBack={() => setMode('list')} />
+        <div className="page-container" style={{ maxWidth: 520 }}>
+          <SalesRecordDetail
+            record={selected}
+            stores={stores}
+            canEdit={selected.date === today}
+            onEdit={() => setMode('edit')}
+            onBack={() => setMode('list')}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (mode === 'edit' && selected) {
+    return (
+      <div>
+        <Header title={`${castName} さん・入力内容を修正`} onBack={() => setMode('view')} />
         <div className="page-container" style={{ maxWidth: 520 }}>
           <SalesRecordForm
             stores={stores}
-            initial={editing}
-            onCancel={() => setMode('list')}
+            initial={selected}
+            onCancel={() => setMode('view')}
             onDelete={async () => {
-              await deleteSalesRecord(editing.id);
+              await deleteSalesRecord(selected.id);
               setMode('list');
             }}
             onSubmit={async (value: SalesRecordFormValue) => {
-              await updateSalesRecord(editing.id, {
-                date: editing.date,
-                castId: editing.castId,
+              await updateSalesRecord(selected.id, {
+                date: selected.date,
+                castId: selected.castId,
                 ...value,
               });
               setMode('list');
@@ -107,19 +127,15 @@ export default function StaffEntryPage() {
                   {r.nominated && '・指名あり'}
                 </div>
               </div>
-              {r.date === today ? (
-                <button
-                  className="btn btn-outline"
-                  onClick={() => {
-                    setEditing(r);
-                    setMode('edit');
-                  }}
-                >
-                  修正
-                </button>
-              ) : (
-                <span style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>編集不可</span>
-              )}
+              <button
+                className="btn btn-outline"
+                onClick={() => {
+                  setSelected(r);
+                  setMode('view');
+                }}
+              >
+                詳細を見る
+              </button>
             </div>
           ))}
         </div>

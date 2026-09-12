@@ -190,8 +190,12 @@ function RecordsTab({
   }, [casts, newCastId]);
   const [newDate, setNewDate] = useState(todayString());
   const [filterCast, setFilterCast] = useState('');
+  const [filterMonth, setFilterMonth] = useState('');
 
-  const filtered = filterCast ? records.filter((r) => r.castId === filterCast) : records;
+  const filtered = records.filter(
+    (r) =>
+      (!filterCast || r.castId === filterCast) && (!filterMonth || r.date.startsWith(filterMonth))
+  );
 
   if (editing) {
     return (
@@ -266,23 +270,52 @@ function RecordsTab({
           ＋ 記録を追加
         </button>
       </div>
-      <div style={{ marginBottom: 14 }}>
-        <label className="field-label" style={{ margin: 0, display: 'inline-block', marginRight: 8 }}>
-          キャストで絞り込み
-        </label>
-        <select
-          className="field-input"
-          style={{ width: 200, display: 'inline-block' }}
-          value={filterCast}
-          onChange={(e) => setFilterCast(e.target.value)}
-        >
-          <option value="">すべて</option>
-          {casts.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+      <div style={{ marginBottom: 14, display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div>
+          <label className="field-label" style={{ margin: 0, display: 'inline-block', marginRight: 8 }}>
+            キャストで絞り込み
+          </label>
+          <select
+            className="field-input"
+            style={{ width: 200, display: 'inline-block' }}
+            value={filterCast}
+            onChange={(e) => setFilterCast(e.target.value)}
+          >
+            <option value="">すべて</option>
+            {casts.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="field-label" style={{ margin: 0, display: 'inline-block', marginRight: 8 }}>
+            月で絞り込み
+          </label>
+          <input
+            type="month"
+            className="field-input"
+            style={{ width: 160, display: 'inline-block' }}
+            value={filterMonth}
+            onChange={(e) => setFilterMonth(e.target.value)}
+          />
+          {filterMonth && (
+            <button
+              className="btn btn-outline"
+              style={{ marginLeft: 8, padding: '8px 12px' }}
+              onClick={() => setFilterMonth('')}
+            >
+              月指定を解除
+            </button>
+          )}
+        </div>
+        {(filterCast || filterMonth) && (
+          <div style={{ color: 'var(--color-text-muted)', fontSize: 14 }}>
+            該当 {filtered.length}件・合計 ¥
+            {filtered.reduce((sum, r) => sum + r.totalAmount, 0).toLocaleString()}
+          </div>
+        )}
       </div>
       <table className="data-table">
         <thead>
