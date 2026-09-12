@@ -61,7 +61,7 @@ export default function OwnerPage() {
             売上記録一覧
           </button>
           <button className={tab === 'casts' ? 'active' : ''} onClick={() => setTab('casts')}>
-            キャスト管理
+            スタッフ管理
           </button>
           <button className={tab === 'stores' ? 'active' : ''} onClick={() => setTab('stores')}>
             店舗管理
@@ -143,7 +143,7 @@ function ReportTab({
       <table className="data-table">
         <thead>
           <tr>
-            <th>キャスト</th>
+            <th>スタッフ</th>
             <th>売上合計</th>
             <th>歩合率</th>
             <th>歩合給</th>
@@ -226,7 +226,7 @@ function RecordsTab({
       <div style={{ maxWidth: 520 }}>
         <div className="card" style={{ marginBottom: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <div>
-            <label className="field-label">キャスト</label>
+            <label className="field-label">スタッフ</label>
             <select className="field-input" value={newCastId} onChange={(e) => setNewCastId(e.target.value)}>
               {casts.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -273,7 +273,7 @@ function RecordsTab({
       <div style={{ marginBottom: 14, display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'center' }}>
         <div>
           <label className="field-label" style={{ margin: 0, display: 'inline-block', marginRight: 8 }}>
-            キャストで絞り込み
+            スタッフで絞り込み
           </label>
           <select
             className="field-input"
@@ -322,7 +322,7 @@ function RecordsTab({
           <tr>
             <th>日付</th>
             <th>店舗</th>
-            <th>キャスト</th>
+            <th>スタッフ</th>
             <th>合計金額</th>
             <th>指名</th>
             <th></th>
@@ -356,7 +356,7 @@ function CastsTab({ casts }: { casts: Cast[] }) {
   return (
     <div style={{ display: 'grid', gap: 16 }}>
       <div className="card">
-        <h3 style={{ marginBottom: 14 }}>新しいキャストを追加</h3>
+        <h3 style={{ marginBottom: 14 }}>新しいスタッフを追加</h3>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <input
             className="field-input"
@@ -435,7 +435,11 @@ function CastRow({ cast }: { cast: Cast }) {
       <button
         className="btn btn-danger"
         style={{ marginLeft: 'auto' }}
-        onClick={() => deleteCast(cast.id)}
+        onClick={() => {
+          if (window.confirm(`「${cast.name}」を本当に削除しますか？この操作は取り消せません。`)) {
+            deleteCast(cast.id);
+          }
+        }}
       >
         削除
       </button>
@@ -495,7 +499,15 @@ function StoreRow({ store }: { store: Store }) {
           if (name.trim() && name !== store.name) updateStore(store.id, { name: name.trim() });
         }}
       />
-      <button className="btn btn-danger" style={{ marginLeft: 'auto' }} onClick={() => deleteStore(store.id)}>
+      <button
+        className="btn btn-danger"
+        style={{ marginLeft: 'auto' }}
+        onClick={() => {
+          if (window.confirm(`「${store.name}」を本当に削除しますか？この操作は取り消せません。`)) {
+            deleteStore(store.id);
+          }
+        }}
+      >
         削除
       </button>
     </div>

@@ -40,7 +40,7 @@ export function exportCastMonthlyReportToExcel(
   yearMonth: string
 ) {
   const data = rows.map((r) => ({
-    キャスト名: r.castName,
+    スタッフ名: r.castName,
     売上合計: r.totalSales,
     歩合率: `${Math.round(r.commissionRate * 100)}%`,
     歩合給: r.commissionAmount,

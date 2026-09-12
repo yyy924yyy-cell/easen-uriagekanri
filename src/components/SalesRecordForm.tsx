@@ -266,6 +266,7 @@ export default function SalesRecordForm({ stores, initial, onSubmit, onCancel, o
             className="btn btn-danger"
             style={{ flex: 1 }}
             onClick={async () => {
+              if (!window.confirm('本当に削除しますか？この操作は取り消せません。')) return;
               setError(null);
               try {
                 await onDelete();
