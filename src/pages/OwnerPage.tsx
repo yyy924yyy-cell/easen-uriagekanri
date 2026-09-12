@@ -387,15 +387,32 @@ function CastsTab({ casts }: { casts: Cast[] }) {
         </div>
       </div>
       <div style={{ display: 'grid', gap: 10 }}>
-        {casts.map((c) => (
-          <CastRow key={c.id} cast={c} />
+        {casts.map((c, i) => (
+          <CastRow
+            key={c.id}
+            cast={c}
+            onMoveUp={i > 0 ? () => swapCastOrder(casts[i], casts[i - 1]) : undefined}
+            onMoveDown={i < casts.length - 1 ? () => swapCastOrder(casts[i], casts[i + 1]) : undefined}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-function CastRow({ cast }: { cast: Cast }) {
+async function swapCastOrder(a: Cast, b: Cast) {
+  await Promise.all([updateCast(a.id, { order: b.order }), updateCast(b.id, { order: a.order })]);
+}
+
+function CastRow({
+  cast,
+  onMoveUp,
+  onMoveDown,
+}: {
+  cast: Cast;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+}) {
   const [name, setName] = useState(cast.name);
   const [rate, setRate] = useState(String(Math.round(cast.commissionRate * 100)));
 
@@ -404,6 +421,26 @@ function CastRow({ cast }: { cast: Cast }) {
 
   return (
     <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <button
+          type="button"
+          className="btn btn-outline"
+          style={{ padding: '4px 10px', fontSize: 12, opacity: onMoveUp ? 1 : 0.3 }}
+          disabled={!onMoveUp}
+          onClick={onMoveUp}
+        >
+          ↑
+        </button>
+        <button
+          type="button"
+          className="btn btn-outline"
+          style={{ padding: '4px 10px', fontSize: 12, opacity: onMoveDown ? 1 : 0.3 }}
+          disabled={!onMoveDown}
+          onClick={onMoveDown}
+        >
+          ↓
+        </button>
+      </div>
       <input
         className="field-input"
         style={{ maxWidth: 200 }}
