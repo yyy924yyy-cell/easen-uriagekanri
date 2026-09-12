@@ -1,6 +1,6 @@
 {
-  "name": "易苑 売上管理",
-  "short_name": "易苑売上",
+  "name": "EASEN 売上管理",
+  "short_name": "EASEN売上",
   "start_url": "/easen-uriagekanri/",
   "scope": "/easen-uriagekanri/",
   "display": "standalone",

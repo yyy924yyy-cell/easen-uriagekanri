@@ -26,7 +26,7 @@ export default function Header({ title, onBack }: HeaderProps) {
               ←
             </button>
           )}
-          易苑 売上管理
+          EASEN 売上管理
         </div>
         <div className="subtitle">{title}</div>
       </div>

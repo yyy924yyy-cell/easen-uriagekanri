@@ -34,7 +34,7 @@ export default function LoginPage() {
     >
       <div className="card" style={{ width: '100%', maxWidth: 380 }}>
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <h1 style={{ fontSize: 28 }}>易苑</h1>
+          <h1 style={{ fontSize: 28 }}>EASEN</h1>
           <p style={{ color: 'var(--color-text-muted)', marginTop: 6 }}>売上・歩合給管理</p>
         </div>
         <form onSubmit={handleSubmit}>
