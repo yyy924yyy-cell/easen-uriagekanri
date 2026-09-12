@@ -24,7 +24,9 @@ export interface SalesRecord {
   storeId: string;
   castId: string;
   treatmentAmount: number; // 施術金額
+  treatmentMemo?: string; // 施術金額の備考
   optionAmount: number; // 追加オプション金額
+  optionMemo?: string; // 追加オプション金額の備考
   totalAmount: number; // 合計金額 = treatmentAmount + optionAmount（歩合給の計算対象）
   pointsUsed: number; // 使用ポイント
   paymentAmount: number; // 客の支払金額 = totalAmount - pointsUsed

@@ -104,7 +104,9 @@ export interface NewSalesRecordInput {
   storeId: string;
   castId: string;
   treatmentAmount: number;
+  treatmentMemo?: string;
   optionAmount: number;
+  optionMemo?: string;
   pointsUsed: number;
   nominated: boolean;
   paymentMethod: SalesRecord['paymentMethod'];
@@ -117,6 +119,8 @@ export async function addSalesRecord(input: NewSalesRecordInput) {
   const paymentAmount = totalAmount - input.pointsUsed;
   await addDoc(collection(db, 'salesRecords'), {
     ...input,
+    treatmentMemo: input.treatmentMemo ?? '',
+    optionMemo: input.optionMemo ?? '',
     totalAmount,
     paymentAmount,
     createdAt: serverTimestamp(),
@@ -132,6 +136,8 @@ export async function updateSalesRecord(
   const paymentAmount = totalAmount - input.pointsUsed;
   await updateDoc(doc(db, 'salesRecords', id), {
     ...input,
+    treatmentMemo: input.treatmentMemo ?? '',
+    optionMemo: input.optionMemo ?? '',
     totalAmount,
     paymentAmount,
     updatedAt: serverTimestamp(),
