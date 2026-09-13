@@ -389,7 +389,7 @@ function CastsTab({ casts }: { casts: Cast[] }) {
             className="btn btn-primary"
             onClick={async () => {
               if (!name.trim()) return;
-              await addCast(name.trim(), Number(rate) / 100, casts.length);
+              await addCast(name.trim(), Number(rate) / 100, nextOrder(casts));
               setName('');
               setRate('10');
             }}
@@ -410,6 +410,10 @@ function CastsTab({ casts }: { casts: Cast[] }) {
       </div>
     </div>
   );
+}
+
+function nextOrder(items: { order: number }[]): number {
+  return items.length === 0 ? 0 : Math.max(...items.map((i) => i.order)) + 1;
 }
 
 async function swapCastOrder(a: Cast, b: Cast) {
@@ -515,7 +519,7 @@ function StoresTab({ stores }: { stores: Store[] }) {
             className="btn btn-primary"
             onClick={async () => {
               if (!name.trim()) return;
-              await addStore(name.trim(), stores.length);
+              await addStore(name.trim(), nextOrder(stores));
               setName('');
             }}
           >
