@@ -28,13 +28,29 @@ export default function LoginPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'var(--gradient-main)',
+        background: 'var(--color-bg)',
         padding: 24,
       }}
     >
-      <div className="card" style={{ width: '100%', maxWidth: 380 }}>
+      <div
+        className="card"
+        style={{
+          width: '100%',
+          maxWidth: 380,
+          border: '1px solid var(--color-gold)',
+          boxShadow: '0 8px 32px rgba(40, 32, 20, 0.08)',
+        }}
+      >
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <h1 style={{ fontSize: 28 }}>EASEN</h1>
+          <div
+            style={{
+              width: 40,
+              height: 2,
+              background: 'var(--gradient-main)',
+              margin: '0 auto 18px',
+            }}
+          />
+          <h1 style={{ fontSize: 28, letterSpacing: '0.06em' }}>EASEN</h1>
           <p style={{ color: 'var(--color-text-muted)', marginTop: 6 }}>売上・歩合給管理</p>
         </div>
         <form onSubmit={handleSubmit}>

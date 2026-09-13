@@ -1,20 +1,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap');
 
 :root {
-  --color-bg: #fbf3ef;
+  --color-bg: #faf9f6;
   --color-surface: #ffffff;
-  --color-rose-dark: #6e3b52;
-  --color-rose: #b85c7c;
-  --color-rose-light: #e7a9bd;
-  --color-gold: #c9a876;
-  --color-text: #3a2530;
-  --color-text-muted: #6b5560;
-  --color-border: #efe1e0;
-  --color-danger: #b8455c;
-  --gradient-main: linear-gradient(135deg, var(--color-rose) 0%, var(--color-rose-dark) 100%);
+  --color-rose-dark: #4a3f38;
+  --color-rose: #8a7360;
+  --color-rose-light: #e4d9c8;
+  --color-gold: #b3945f;
+  --color-gold-dark: #8a7245;
+  --color-text: #2c2620;
+  --color-text-muted: #8a8177;
+  --color-border: #ece6da;
+  --color-danger: #a3453f;
+  --gradient-main: linear-gradient(135deg, #cbb188 0%, #8a7245 100%);
   --radius: 16px;
   --radius-sm: 10px;
-  --shadow-soft: 0 4px 20px rgba(110, 59, 82, 0.08);
+  --shadow-soft: 0 4px 24px rgba(40, 32, 20, 0.06);
   font-family: 'Zen Kaku Gothic New', 'Hiragino Sans', sans-serif;
   color-scheme: light;
 }
@@ -59,25 +60,28 @@ textarea {
 }
 
 .app-header {
-  background: var(--gradient-main);
-  color: #fff;
-  padding: 18px 24px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  padding: 20px 28px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: var(--shadow-soft);
+  border-bottom: 1px solid var(--color-gold);
 }
 
 .app-header .brand {
   font-family: 'Shippori Mincho', serif;
   font-size: 22px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
+  color: var(--color-text);
 }
 
 .app-header .subtitle {
   font-size: 12px;
-  opacity: 0.85;
-  letter-spacing: 0.08em;
+  color: var(--color-gold-dark);
+  opacity: 0.9;
+  letter-spacing: 0.1em;
+  margin-top: 2px;
 }
 
 .btn {

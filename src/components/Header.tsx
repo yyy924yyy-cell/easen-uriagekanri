@@ -18,7 +18,7 @@ export default function Header({ title, onBack }: HeaderProps) {
               style={{
                 background: 'none',
                 border: 'none',
-                color: '#fff',
+                color: 'var(--color-gold-dark)',
                 marginRight: 10,
                 fontSize: 18,
               }}
@@ -31,7 +31,7 @@ export default function Header({ title, onBack }: HeaderProps) {
         <div className="subtitle">{title}</div>
       </div>
       <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-        <span style={{ fontSize: 13, opacity: 0.9 }}>
+        <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>
           {role === 'owner' ? 'オーナー' : 'スタッフ'}
         </span>
         <button

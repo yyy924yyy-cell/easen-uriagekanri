@@ -20,7 +20,7 @@ export default function FloatingTopButton({ onClick, label = 'TOPに戻る', sid
         padding: '14px 22px',
         fontSize: 14,
         fontWeight: 700,
-        boxShadow: '0 6px 18px rgba(110, 59, 82, 0.35)',
+        boxShadow: '0 6px 18px rgba(40, 32, 20, 0.25)',
         display: 'flex',
         alignItems: 'center',
         gap: 8,
