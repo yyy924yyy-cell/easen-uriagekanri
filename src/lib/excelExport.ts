@@ -2,6 +2,7 @@ import * as XLSX from 'xlsx';
 import type { Cast, SalesRecord } from '../types';
 
 export interface CastMonthlyReportRow {
+  castId: string;
   castName: string;
   totalSales: number;
   commissionRate: number;
@@ -24,6 +25,7 @@ export function buildCastMonthlyReport(
     const totalSales = castRecords.reduce((sum, r) => sum + r.totalAmount, 0);
     const nominationCount = castRecords.filter((r) => r.nominated).length;
     return {
+      castId: cast.id,
       castName: cast.name,
       totalSales,
       commissionRate: cast.commissionRate,

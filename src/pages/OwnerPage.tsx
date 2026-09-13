@@ -36,6 +36,8 @@ export default function OwnerPage() {
   const [casts, setCasts] = useState<Cast[]>([]);
   const [stores, setStores] = useState<Store[]>([]);
   const [settings, setSettings] = useState<GeneralSettings>({ nominationFee: 500 });
+  const [recordsFilterCast, setRecordsFilterCast] = useState('');
+  const [recordsFilterMonth, setRecordsFilterMonth] = useState('');
 
   useEffect(() => subscribeAllSalesRecords(setRecords), []);
   useEffect(() => subscribeCasts(setCasts), []);
@@ -80,10 +82,26 @@ export default function OwnerPage() {
             nominationFee={settings.nominationFee}
             castNameById={castNameById}
             storeNameById={storeNameById}
+            onViewDetail={(castId, yearMonth) => {
+              setRecordsFilterCast(castId);
+              setRecordsFilterMonth(yearMonth);
+              setTab('records');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
           />
         )}
         {tab === 'records' && (
-          <RecordsTab records={records} casts={casts} stores={stores} castNameById={castNameById} storeNameById={storeNameById} />
+          <RecordsTab
+            records={records}
+            casts={casts}
+            stores={stores}
+            castNameById={castNameById}
+            storeNameById={storeNameById}
+            filterCast={recordsFilterCast}
+            setFilterCast={setRecordsFilterCast}
+            filterMonth={recordsFilterMonth}
+            setFilterMonth={setRecordsFilterMonth}
+          />
         )}
         {tab === 'casts' && <CastsTab casts={casts} />}
         {tab === 'stores' && <StoresTab stores={stores} />}
@@ -111,12 +129,14 @@ function ReportTab({
   nominationFee,
   castNameById,
   storeNameById,
+  onViewDetail,
 }: {
   records: SalesRecord[];
   casts: Cast[];
   nominationFee: number;
   castNameById: Record<string, string>;
   storeNameById: Record<string, string>;
+  onViewDetail: (castId: string, yearMonth: string) => void;
 }) {
   const [yearMonth, setYearMonth] = useState(currentYearMonth());
   const rows = useMemo(
@@ -159,17 +179,27 @@ function ReportTab({
             <th>歩合給</th>
             <th>指名件数</th>
             <th>指名料合計</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
           {rows.map((r) => (
-            <tr key={r.castName}>
+            <tr key={r.castId}>
               <td>{r.castName}</td>
               <td>¥{r.totalSales.toLocaleString()}</td>
               <td>{Math.round(r.commissionRate * 100)}%</td>
               <td>¥{r.commissionAmount.toLocaleString()}</td>
               <td>{r.nominationCount}件</td>
               <td>¥{r.nominationAmount.toLocaleString()}</td>
+              <td>
+                <button
+                  className="btn btn-outline"
+                  style={{ padding: '6px 14px', fontSize: 13 }}
+                  onClick={() => onViewDetail(r.castId, yearMonth)}
+                >
+                  詳細
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -184,12 +214,20 @@ function RecordsTab({
   stores,
   castNameById,
   storeNameById,
+  filterCast,
+  setFilterCast,
+  filterMonth,
+  setFilterMonth,
 }: {
   records: SalesRecord[];
   casts: Cast[];
   stores: Store[];
   castNameById: Record<string, string>;
   storeNameById: Record<string, string>;
+  filterCast: string;
+  setFilterCast: (v: string) => void;
+  filterMonth: string;
+  setFilterMonth: (v: string) => void;
 }) {
   const [editing, setEditing] = useState<SalesRecord | null>(null);
   const [creating, setCreating] = useState(false);
@@ -199,8 +237,6 @@ function RecordsTab({
     if (!newCastId && casts.length > 0) setNewCastId(casts[0].id);
   }, [casts, newCastId]);
   const [newDate, setNewDate] = useState(todayString());
-  const [filterCast, setFilterCast] = useState('');
-  const [filterMonth, setFilterMonth] = useState('');
 
   const filtered = records.filter(
     (r) =>
