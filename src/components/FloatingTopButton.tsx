@@ -1,15 +1,16 @@
 interface Props {
   onClick: () => void;
   label?: string;
+  side?: 'left' | 'right';
 }
 
-export default function FloatingTopButton({ onClick, label = 'TOPに戻る' }: Props) {
+export default function FloatingTopButton({ onClick, label = 'TOPに戻る', side = 'right' }: Props) {
   return (
     <button
       onClick={onClick}
       style={{
         position: 'fixed',
-        right: 20,
+        [side]: 20,
         bottom: 20,
         zIndex: 50,
         background: 'var(--gradient-main)',

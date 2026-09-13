@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Header from '../components/Header';
 import SalesRecordForm, { type SalesRecordFormValue } from '../components/SalesRecordForm';
 import Toggle from '../components/Toggle';
+import FloatingTopButton from '../components/FloatingTopButton';
 import {
   subscribeAllSalesRecords,
   subscribeCasts,
@@ -87,6 +88,14 @@ export default function OwnerPage() {
         {tab === 'stores' && <StoresTab stores={stores} />}
         {tab === 'settings' && <SettingsTab settings={settings} />}
       </div>
+      <FloatingTopButton
+        side="left"
+        label="TOPに戻る"
+        onClick={() => {
+          setTab('report');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+      />
     </div>
   );
 }
@@ -217,6 +226,7 @@ function RecordsTab({
             setEditing(null);
           }}
         />
+        <FloatingTopButton onClick={() => setEditing(null)} label="一覧に戻る" />
       </div>
     );
   }
@@ -259,6 +269,7 @@ function RecordsTab({
             setCreating(false);
           }}
         />
+        <FloatingTopButton onClick={() => setCreating(false)} label="一覧に戻る" />
       </div>
     );
   }
