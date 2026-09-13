@@ -20,6 +20,7 @@ interface Props {
   onSubmit: (value: SalesRecordFormValue) => Promise<void>;
   onCancel: () => void;
   onDelete?: () => Promise<void>;
+  showPaidToggle?: boolean;
 }
 
 function errorMessage(err: unknown): string {
@@ -34,7 +35,14 @@ function errorMessage(err: unknown): string {
   return '保存できませんでした。もう一度お試しください。';
 }
 
-export default function SalesRecordForm({ stores, initial, onSubmit, onCancel, onDelete }: Props) {
+export default function SalesRecordForm({
+  stores,
+  initial,
+  onSubmit,
+  onCancel,
+  onDelete,
+  showPaidToggle = true,
+}: Props) {
   const [storeId, setStoreId] = useState(initial?.storeId ?? stores[0]?.id ?? '');
 
   useEffect(() => {
@@ -54,7 +62,7 @@ export default function SalesRecordForm({ stores, initial, onSubmit, onCancel, o
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
     initial?.paymentMethod ?? 'cash'
   );
-  const [isPaid, setIsPaid] = useState(initial?.isPaid ?? false);
+  const [isPaid, setIsPaid] = useState(initial?.isPaid ?? showPaidToggle === false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -250,7 +258,7 @@ export default function SalesRecordForm({ stores, initial, onSubmit, onCancel, o
       </div>
 
       <Toggle checked={nominated} onChange={setNominated} label="指名" />
-      <Toggle checked={isPaid} onChange={setIsPaid} label="会計済" />
+      {showPaidToggle && <Toggle checked={isPaid} onChange={setIsPaid} label="会計済" />}
 
       {error && (
         <p style={{ color: 'var(--color-danger)', fontSize: 14, margin: 0 }}>{error}</p>

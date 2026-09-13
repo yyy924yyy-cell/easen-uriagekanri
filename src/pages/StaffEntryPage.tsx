@@ -48,6 +48,7 @@ export default function StaffEntryPage() {
         <div className="page-container" style={{ maxWidth: 520 }}>
           <SalesRecordForm
             stores={stores}
+            showPaidToggle={false}
             onCancel={() => setMode('list')}
             onSubmit={async (value: SalesRecordFormValue) => {
               await addSalesRecord({
@@ -56,7 +57,7 @@ export default function StaffEntryPage() {
                 createdBy: 'staff',
                 ...value,
               });
-              setMode('list');
+              setSelectedCastId(null);
             }}
           />
         </div>
@@ -91,6 +92,7 @@ export default function StaffEntryPage() {
           <SalesRecordForm
             stores={stores}
             initial={selected}
+            showPaidToggle={false}
             onCancel={() => setMode('view')}
             onDelete={async () => {
               await deleteSalesRecord(selected.id);
