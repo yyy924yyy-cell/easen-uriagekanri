@@ -3,6 +3,7 @@ import Header from '../components/Header';
 import SalesRecordForm, { type SalesRecordFormValue } from '../components/SalesRecordForm';
 import Toggle from '../components/Toggle';
 import FloatingTopButton from '../components/FloatingTopButton';
+import ChangeOwnerPasswordForm from '../components/ChangeOwnerPasswordForm';
 import {
   subscribeAllSalesRecords,
   subscribeCasts,
@@ -568,18 +569,21 @@ function SettingsTab({ settings }: { settings: GeneralSettings }) {
   useEffect(() => setFee(String(settings.nominationFee)), [settings.nominationFee]);
 
   return (
-    <div className="card" style={{ maxWidth: 360 }}>
-      <label className="field-label">指名料単価（円）</label>
-      <input
-        className="field-input"
-        style={{ marginBottom: 14 }}
-        type="number"
-        value={fee}
-        onChange={(e) => setFee(e.target.value)}
-      />
-      <button className="btn btn-primary" onClick={() => updateSettings({ nominationFee: Number(fee) })}>
-        保存
-      </button>
+    <div style={{ display: 'grid', gap: 20 }}>
+      <div className="card" style={{ maxWidth: 360 }}>
+        <label className="field-label">指名料単価（円）</label>
+        <input
+          className="field-input"
+          style={{ marginBottom: 14 }}
+          type="number"
+          value={fee}
+          onChange={(e) => setFee(e.target.value)}
+        />
+        <button className="btn btn-primary" onClick={() => updateSettings({ nominationFee: Number(fee) })}>
+          保存
+        </button>
+      </div>
+      <ChangeOwnerPasswordForm />
     </div>
   );
 }
