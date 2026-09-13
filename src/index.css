@@ -230,8 +230,14 @@ textarea {
   color: var(--color-rose-dark);
 }
 
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 table.data-table {
   width: 100%;
+  min-width: 600px;
   border-collapse: collapse;
   font-size: 14px;
 }
@@ -241,6 +247,7 @@ table.data-table td {
   padding: 10px 12px;
   border-bottom: 1px solid var(--color-border);
   text-align: left;
+  white-space: nowrap;
 }
 
 table.data-table th {
@@ -268,4 +275,31 @@ table.data-table th {
   background: var(--color-rose-dark);
   color: #fff;
   border-color: var(--color-rose-dark);
+}
+
+@media (max-width: 480px) {
+  .page-container {
+    padding: 16px;
+  }
+
+  .app-header {
+    padding: 14px 16px;
+  }
+
+  .app-header .brand {
+    font-size: 18px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .nav-tabs button {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  table.data-table {
+    font-size: 13px;
+  }
 }

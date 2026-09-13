@@ -170,40 +170,42 @@ function ReportTab({
           売上明細をエクセル出力
         </button>
       </div>
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>スタッフ</th>
-            <th>売上合計</th>
-            <th>歩合率</th>
-            <th>歩合給</th>
-            <th>指名件数</th>
-            <th>指名料合計</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.castId}>
-              <td>{r.castName}</td>
-              <td>¥{r.totalSales.toLocaleString()}</td>
-              <td>{Math.round(r.commissionRate * 100)}%</td>
-              <td>¥{r.commissionAmount.toLocaleString()}</td>
-              <td>{r.nominationCount}件</td>
-              <td>¥{r.nominationAmount.toLocaleString()}</td>
-              <td>
-                <button
-                  className="btn btn-outline"
-                  style={{ padding: '6px 14px', fontSize: 13 }}
-                  onClick={() => onViewDetail(r.castId, yearMonth)}
-                >
-                  詳細
-                </button>
-              </td>
+      <div className="table-scroll">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>スタッフ</th>
+              <th>売上合計</th>
+              <th>歩合率</th>
+              <th>歩合給</th>
+              <th>指名件数</th>
+              <th>指名料合計</th>
+              <th></th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.castId}>
+                <td>{r.castName}</td>
+                <td>¥{r.totalSales.toLocaleString()}</td>
+                <td>{Math.round(r.commissionRate * 100)}%</td>
+                <td>¥{r.commissionAmount.toLocaleString()}</td>
+                <td>{r.nominationCount}件</td>
+                <td>¥{r.nominationAmount.toLocaleString()}</td>
+                <td>
+                  <button
+                    className="btn btn-outline"
+                    style={{ padding: '6px 14px', fontSize: 13 }}
+                    onClick={() => onViewDetail(r.castId, yearMonth)}
+                  >
+                    詳細
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -365,34 +367,36 @@ function RecordsTab({
           </div>
         )}
       </div>
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>日付</th>
-            <th>店舗</th>
-            <th>スタッフ</th>
-            <th>合計金額</th>
-            <th>指名</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {filtered.map((r) => (
-            <tr key={r.id}>
-              <td>{r.date}</td>
-              <td>{storeNameById[r.storeId]}</td>
-              <td>{castNameById[r.castId]}</td>
-              <td>¥{r.totalAmount.toLocaleString()}</td>
-              <td>{r.nominated ? '有' : '無'}</td>
-              <td>
-                <button className="btn btn-outline" style={{ padding: '6px 12px' }} onClick={() => setEditing(r)}>
-                  編集
-                </button>
-              </td>
+      <div className="table-scroll">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>日付</th>
+              <th>店舗</th>
+              <th>スタッフ</th>
+              <th>合計金額</th>
+              <th>指名</th>
+              <th></th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {filtered.map((r) => (
+              <tr key={r.id}>
+                <td>{r.date}</td>
+                <td>{storeNameById[r.storeId]}</td>
+                <td>{castNameById[r.castId]}</td>
+                <td>¥{r.totalAmount.toLocaleString()}</td>
+                <td>{r.nominated ? '有' : '無'}</td>
+                <td>
+                  <button className="btn btn-outline" style={{ padding: '6px 12px' }} onClick={() => setEditing(r)}>
+                    編集
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
