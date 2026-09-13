@@ -174,7 +174,7 @@ function ReportTab({
         <table className="data-table">
           <thead>
             <tr>
-              <th>スタッフ</th>
+              <th className="sticky-col">スタッフ</th>
               <th>売上合計</th>
               <th>歩合率</th>
               <th>歩合給</th>
@@ -186,7 +186,7 @@ function ReportTab({
           <tbody>
             {rows.map((r) => (
               <tr key={r.castId}>
-                <td>{r.castName}</td>
+                <td className="sticky-col">{r.castName}</td>
                 <td>¥{r.totalSales.toLocaleString()}</td>
                 <td>{Math.round(r.commissionRate * 100)}%</td>
                 <td>¥{r.commissionAmount.toLocaleString()}</td>
@@ -371,9 +371,9 @@ function RecordsTab({
         <table className="data-table">
           <thead>
             <tr>
+              <th className="sticky-col">スタッフ</th>
               <th>日付</th>
               <th>店舗</th>
-              <th>スタッフ</th>
               <th>合計金額</th>
               <th>指名</th>
               <th></th>
@@ -382,9 +382,9 @@ function RecordsTab({
           <tbody>
             {filtered.map((r) => (
               <tr key={r.id}>
+                <td className="sticky-col">{castNameById[r.castId]}</td>
                 <td>{r.date}</td>
                 <td>{storeNameById[r.storeId]}</td>
-                <td>{castNameById[r.castId]}</td>
                 <td>¥{r.totalAmount.toLocaleString()}</td>
                 <td>{r.nominated ? '有' : '無'}</td>
                 <td>
