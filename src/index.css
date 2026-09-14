@@ -36,6 +36,8 @@ body {
   color: var(--color-text);
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: contain;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
 }
 
 h1,
@@ -90,11 +92,17 @@ textarea {
   padding: 12px 20px;
   font-size: 15px;
   font-weight: 500;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(40, 32, 20, 0.12);
 }
 
 .btn:active {
-  transform: scale(0.98);
+  transform: scale(0.97) translateY(0);
+  box-shadow: 0 2px 6px rgba(40, 32, 20, 0.1);
 }
 
 .btn-primary {
@@ -167,10 +175,23 @@ textarea {
   color: var(--color-rose-dark);
   box-shadow: var(--shadow-soft);
   min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 .cast-button:hover {
   border-color: var(--color-rose);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(40, 32, 20, 0.12);
+}
+
+.cast-button:active {
+  transform: scale(0.97);
+  box-shadow: 0 4px 10px rgba(40, 32, 20, 0.1);
 }
 
 .segmented {
@@ -186,6 +207,11 @@ textarea {
   background: #fff;
   color: var(--color-text-muted);
   font-weight: 500;
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+
+.segmented button:active {
+  transform: scale(0.96);
 }
 
 .segmented button.active {
@@ -278,6 +304,15 @@ table.data-table th {
   padding: 10px 18px;
   color: var(--color-text-muted);
   font-weight: 500;
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+
+.nav-tabs button:hover {
+  transform: translateY(-1px);
+}
+
+.nav-tabs button:active {
+  transform: scale(0.96);
 }
 
 .nav-tabs button.active {

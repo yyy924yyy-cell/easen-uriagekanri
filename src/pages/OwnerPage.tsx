@@ -716,6 +716,21 @@ function SettingsTab({ settings }: { settings: GeneralSettings }) {
           保存
         </button>
       </div>
+      <div className="card" style={{ maxWidth: 360 }}>
+        <h3 style={{ fontSize: 16, marginBottom: 14 }}>スタッフ選択画面の見た目</h3>
+        <div style={{ display: 'grid', gap: 14 }}>
+          <Toggle
+            checked={settings.showStaffBadge ?? false}
+            onChange={(v) => updateSettings({ showStaffBadge: v })}
+            label="イニシャルバッジを表示する"
+          />
+          <Toggle
+            checked={settings.showStaffColor ?? false}
+            onChange={(v) => updateSettings({ showStaffColor: v })}
+            label="スタッフごとに色をつける"
+          />
+        </div>
+      </div>
       <ChangeOwnerPasswordForm />
     </div>
   );

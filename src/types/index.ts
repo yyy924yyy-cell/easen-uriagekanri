@@ -42,4 +42,6 @@ export interface SalesRecord {
 export interface GeneralSettings {
   nominationFee: number; // 指名料単価（デフォルト500円）
   lastBackupMonth?: string; // 最後にバックアップ出力を行った月（'YYYY-MM'）
+  showStaffBadge?: boolean; // スタッフ選択ボタンにイニシャルバッジを表示するか
+  showStaffColor?: boolean; // スタッフ選択ボタンにスタッフごとの色をつけるか
 }
