@@ -3,6 +3,7 @@ import Header from '../components/Header';
 import SalesRecordForm, { type SalesRecordFormValue } from '../components/SalesRecordForm';
 import Toggle from '../components/Toggle';
 import FloatingTopButton from '../components/FloatingTopButton';
+import BackupReminderBanner from '../components/BackupReminderBanner';
 import ChangeOwnerPasswordForm from '../components/ChangeOwnerPasswordForm';
 import {
   subscribeAllSalesRecords,
@@ -57,6 +58,7 @@ export default function OwnerPage() {
     <div>
       <Header title="オーナー画面" />
       <div className="page-container">
+        <BackupReminderBanner records={records} casts={casts} nominationFee={settings.nominationFee} />
         <div className="nav-tabs">
           <button className={tab === 'report' ? 'active' : ''} onClick={() => setTab('report')}>
             歩合給・指名料レポート
@@ -143,6 +145,19 @@ function ReportTab({
     () => buildCastMonthlyReport(casts, records, yearMonth, nominationFee),
     [casts, records, yearMonth, nominationFee]
   );
+  const totals = useMemo(
+    () =>
+      rows.reduce(
+        (acc, r) => ({
+          totalSales: acc.totalSales + r.totalSales,
+          commissionAmount: acc.commissionAmount + r.commissionAmount,
+          nominationCount: acc.nominationCount + r.nominationCount,
+          nominationAmount: acc.nominationAmount + r.nominationAmount,
+        }),
+        { totalSales: 0, commissionAmount: 0, nominationCount: 0, nominationAmount: 0 }
+      ),
+    [rows]
+  );
 
   return (
     <div className="card">
@@ -169,6 +184,43 @@ function ReportTab({
         >
           売上明細をエクセル出力
         </button>
+      </div>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+          gap: 12,
+          marginBottom: 20,
+          padding: '16px 18px',
+          background: 'var(--color-bg)',
+          borderRadius: 'var(--radius-sm)',
+          border: '1px solid var(--color-border)',
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>全体売上合計</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-gold-dark)' }}>
+            ¥{totals.totalSales.toLocaleString()}
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>全体歩合給合計</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-gold-dark)' }}>
+            ¥{totals.commissionAmount.toLocaleString()}
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>全体指名件数</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-gold-dark)' }}>
+            {totals.nominationCount}件
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>全体指名料合計</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-gold-dark)' }}>
+            ¥{totals.nominationAmount.toLocaleString()}
+          </div>
+        </div>
       </div>
       <div className="table-scroll">
         <table className="data-table">
