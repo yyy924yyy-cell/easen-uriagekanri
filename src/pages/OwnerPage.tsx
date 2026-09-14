@@ -158,6 +158,12 @@ function ReportTab({
       ),
     [rows]
   );
+  const paymentTotals = useMemo(() => {
+    const monthRecords = records.filter((r) => r.date.startsWith(yearMonth));
+    const acc = { cash: 0, card: 0, emoney: 0 };
+    for (const r of monthRecords) acc[r.paymentMethod] += r.paymentAmount;
+    return acc;
+  }, [records, yearMonth]);
 
   return (
     <div className="card">
@@ -219,6 +225,37 @@ function ReportTab({
           <div style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>全体指名料合計</div>
           <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-gold-dark)' }}>
             ¥{totals.nominationAmount.toLocaleString()}
+          </div>
+        </div>
+      </div>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+          gap: 12,
+          marginBottom: 20,
+          padding: '16px 18px',
+          background: '#fff',
+          borderRadius: 'var(--radius-sm)',
+          border: '1px solid var(--color-border)',
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>現金 合計</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-text)' }}>
+            ¥{paymentTotals.cash.toLocaleString()}
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>カード 合計</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-text)' }}>
+            ¥{paymentTotals.card.toLocaleString()}
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>電子マネー 合計</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-text)' }}>
+            ¥{paymentTotals.emoney.toLocaleString()}
           </div>
         </div>
       </div>
