@@ -13,6 +13,7 @@ interface Props {
 export default function BackupReminderBanner({ records, casts, settings }: Props) {
   const [tick, setTick] = useState(0);
   const [hiddenForNow, setHiddenForNow] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => setTick((t) => t + 1), 60_000);
@@ -31,9 +32,14 @@ export default function BackupReminderBanner({ records, casts, settings }: Props
   if (!visible) return null;
 
   async function handleExport() {
+    setError(null);
     const rows = buildCastMonthlyReport(casts, records, yearMonth, settings.nominationFee);
     exportCastMonthlyReportToExcel(rows, yearMonth);
-    await updateSettings({ lastBackupMonth: yearMonth });
+    try {
+      await updateSettings({ lastBackupMonth: yearMonth });
+    } catch {
+      setError('出力は完了しましたが、完了の記録に失敗しました。次回もこのバナーが表示される場合があります。');
+    }
   }
 
   return (
@@ -54,6 +60,9 @@ export default function BackupReminderBanner({ records, casts, settings }: Props
     >
       <div style={{ fontSize: 14, color: 'var(--color-text)' }}>
         📋 今月も終わりです。今月分のデータをエクセル出力してバックアップを取っておきましょう。
+        {error && (
+          <div style={{ color: 'var(--color-danger)', fontSize: 13, marginTop: 6 }}>{error}</div>
+        )}
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         <button
