@@ -38,6 +38,7 @@ export default function StaffEntryPage() {
   );
 
   const today = todayString();
+  const todayCount = useMemo(() => records.filter((r) => r.date === today).length, [records, today]);
 
   if (!selectedCastId) return null;
 
@@ -117,6 +118,21 @@ export default function StaffEntryPage() {
     <div>
       <Header title={`${castName} さんの記録`} onBack={() => setSelectedCastId(null)} />
       <div className="page-container">
+        <div
+          style={{
+            marginBottom: 16,
+            padding: '10px 16px',
+            background: 'var(--color-bg)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--radius-sm)',
+            fontSize: 14,
+            color: 'var(--color-text-muted)',
+            display: 'inline-block',
+          }}
+        >
+          本日、<strong style={{ color: 'var(--color-gold-dark)' }}>{todayCount}件</strong> 入力済み
+        </div>
+        <br />
         <button className="btn btn-primary" style={{ marginBottom: 20 }} onClick={() => setMode('new')}>
           ＋ 本日の売上を入力する
         </button>
