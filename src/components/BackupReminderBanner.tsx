@@ -1,37 +1,39 @@
 import { useEffect, useState } from 'react';
-import {
-  shouldShowBackupReminder,
-  currentYearMonth,
-  markBackupDone,
-} from '../lib/backupReminder';
+import { isLastDayOfMonthNow, isAfterReminderHour, currentYearMonth } from '../lib/backupReminder';
 import { buildCastMonthlyReport, exportCastMonthlyReportToExcel } from '../lib/excelExport';
-import type { Cast, SalesRecord } from '../types';
+import { updateSettings } from '../lib/data';
+import type { Cast, GeneralSettings, SalesRecord } from '../types';
 
 interface Props {
   records: SalesRecord[];
   casts: Cast[];
-  nominationFee: number;
+  settings: GeneralSettings;
 }
 
-export default function BackupReminderBanner({ records, casts, nominationFee }: Props) {
-  const [visible, setVisible] = useState(false);
+export default function BackupReminderBanner({ records, casts, settings }: Props) {
+  const [tick, setTick] = useState(0);
   const [hiddenForNow, setHiddenForNow] = useState(false);
 
   useEffect(() => {
-    setVisible(shouldShowBackupReminder());
-    const timer = setInterval(() => setVisible(shouldShowBackupReminder()), 60_000);
+    const timer = setInterval(() => setTick((t) => t + 1), 60_000);
     return () => clearInterval(timer);
   }, []);
 
-  if (!visible || hiddenForNow) return null;
-
   const yearMonth = currentYearMonth();
+  const alreadyDone = settings.lastBackupMonth === yearMonth;
+  const visible =
+    !hiddenForNow && !alreadyDone && isLastDayOfMonthNow() && isAfterReminderHour();
 
-  function handleExport() {
-    const rows = buildCastMonthlyReport(casts, records, yearMonth, nominationFee);
+  // tick is referenced only to force a re-render every minute so the time-based
+  // condition above is re-evaluated; it has no other purpose.
+  void tick;
+
+  if (!visible) return null;
+
+  async function handleExport() {
+    const rows = buildCastMonthlyReport(casts, records, yearMonth, settings.nominationFee);
     exportCastMonthlyReportToExcel(rows, yearMonth);
-    markBackupDone(yearMonth);
-    setVisible(false);
+    await updateSettings({ lastBackupMonth: yearMonth });
   }
 
   return (

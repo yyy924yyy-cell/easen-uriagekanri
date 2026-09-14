@@ -58,7 +58,7 @@ export default function OwnerPage() {
     <div>
       <Header title="オーナー画面" />
       <div className="page-container">
-        <BackupReminderBanner records={records} casts={casts} nominationFee={settings.nominationFee} />
+        <BackupReminderBanner records={records} casts={casts} settings={settings} />
         <div className="nav-tabs">
           <button className={tab === 'report' ? 'active' : ''} onClick={() => setTab('report')}>
             歩合給・指名料レポート
