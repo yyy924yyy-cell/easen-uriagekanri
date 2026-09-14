@@ -13,7 +13,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from './firebaseConfig';
-import type { Cast, Store, SalesRecord, GeneralSettings, Role } from '../types';
+import type { Cast, Store, SalesRecord, GeneralSettings, StaffDisplaySettings, Role } from '../types';
 
 // ---- Casts ----
 export function subscribeCasts(cb: (casts: Cast[]) => void) {
@@ -61,7 +61,7 @@ export async function deleteStore(id: string) {
   await deleteDoc(doc(db, 'stores', id));
 }
 
-// ---- Settings ----
+// ---- Settings（オーナーのみ閲覧可） ----
 const SETTINGS_DOC = 'settings/general';
 
 export async function getSettings(): Promise<GeneralSettings> {
@@ -78,6 +78,19 @@ export function subscribeSettings(cb: (s: GeneralSettings) => void) {
 
 export async function updateSettings(patch: Partial<GeneralSettings>) {
   await setDoc(doc(db, SETTINGS_DOC), patch, { merge: true });
+}
+
+// ---- スタッフ選択画面の表示設定（オーナー・スタッフどちらも閲覧可、書き込みはオーナーのみ） ----
+const STAFF_DISPLAY_SETTINGS_DOC = 'settings/staffDisplay';
+
+export function subscribeStaffDisplaySettings(cb: (s: StaffDisplaySettings) => void) {
+  return onSnapshot(doc(db, STAFF_DISPLAY_SETTINGS_DOC), (snap) => {
+    cb(snap.exists() ? (snap.data() as StaffDisplaySettings) : {});
+  });
+}
+
+export async function updateStaffDisplaySettings(patch: Partial<StaffDisplaySettings>) {
+  await setDoc(doc(db, STAFF_DISPLAY_SETTINGS_DOC), patch, { merge: true });
 }
 
 // ---- Sales records ----

@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
-import { subscribeCasts, subscribeSettings } from '../lib/data';
+import { subscribeCasts, subscribeStaffDisplaySettings } from '../lib/data';
 import { useAuth } from '../contexts/AuthContext';
 import { getCastColor } from '../lib/castColors';
-import type { Cast, GeneralSettings } from '../types';
+import type { Cast, StaffDisplaySettings } from '../types';
 import Header from '../components/Header';
 
 export default function StaffSelectCastPage() {
   const [casts, setCasts] = useState<Cast[]>([]);
-  const [settings, setSettings] = useState<GeneralSettings>({ nominationFee: 500 });
+  const [settings, setSettings] = useState<StaffDisplaySettings>({});
   const [pending, setPending] = useState<Cast | null>(null);
   const { setSelectedCastId } = useAuth();
 
   useEffect(() => subscribeCasts((list) => setCasts(list.filter((c) => c.active))), []);
-  useEffect(() => subscribeSettings(setSettings), []);
+  useEffect(() => subscribeStaffDisplaySettings(setSettings), []);
 
   const showBadge = settings.showStaffBadge ?? false;
   const showColor = settings.showStaffColor ?? false;

@@ -10,6 +10,7 @@ import {
   subscribeCasts,
   subscribeStores,
   subscribeSettings,
+  subscribeStaffDisplaySettings,
   addSalesRecord,
   updateSalesRecord,
   deleteSalesRecord,
@@ -20,6 +21,7 @@ import {
   updateStore,
   deleteStore,
   updateSettings,
+  updateStaffDisplaySettings,
   todayString,
 } from '../lib/data';
 import {
@@ -27,7 +29,7 @@ import {
   exportCastMonthlyReportToExcel,
   exportSalesRecordsToExcel,
 } from '../lib/excelExport';
-import type { Cast, GeneralSettings, SalesRecord, Store } from '../types';
+import type { Cast, GeneralSettings, StaffDisplaySettings, SalesRecord, Store } from '../types';
 
 type Tab = 'records' | 'report' | 'casts' | 'stores' | 'settings';
 
@@ -37,6 +39,7 @@ export default function OwnerPage() {
   const [casts, setCasts] = useState<Cast[]>([]);
   const [stores, setStores] = useState<Store[]>([]);
   const [settings, setSettings] = useState<GeneralSettings>({ nominationFee: 500 });
+  const [staffDisplaySettings, setStaffDisplaySettings] = useState<StaffDisplaySettings>({});
   const [recordsFilterCast, setRecordsFilterCast] = useState('');
   const [recordsFilterMonth, setRecordsFilterMonth] = useState('');
 
@@ -44,6 +47,7 @@ export default function OwnerPage() {
   useEffect(() => subscribeCasts(setCasts), []);
   useEffect(() => subscribeStores(setStores), []);
   useEffect(() => subscribeSettings(setSettings), []);
+  useEffect(() => subscribeStaffDisplaySettings(setStaffDisplaySettings), []);
 
   const castNameById = useMemo(
     () => Object.fromEntries(casts.map((c) => [c.id, c.name])),
@@ -107,7 +111,9 @@ export default function OwnerPage() {
         )}
         {tab === 'casts' && <CastsTab casts={casts} />}
         {tab === 'stores' && <StoresTab stores={stores} />}
-        {tab === 'settings' && <SettingsTab settings={settings} />}
+        {tab === 'settings' && (
+          <SettingsTab settings={settings} staffDisplaySettings={staffDisplaySettings} />
+        )}
       </div>
       <FloatingTopButton
         side="left"
@@ -696,7 +702,13 @@ function StoreRow({ store }: { store: Store }) {
   );
 }
 
-function SettingsTab({ settings }: { settings: GeneralSettings }) {
+function SettingsTab({
+  settings,
+  staffDisplaySettings,
+}: {
+  settings: GeneralSettings;
+  staffDisplaySettings: StaffDisplaySettings;
+}) {
   const [fee, setFee] = useState(String(settings.nominationFee));
 
   useEffect(() => setFee(String(settings.nominationFee)), [settings.nominationFee]);
@@ -720,13 +732,13 @@ function SettingsTab({ settings }: { settings: GeneralSettings }) {
         <h3 style={{ fontSize: 16, marginBottom: 14 }}>スタッフ選択画面の見た目</h3>
         <div style={{ display: 'grid', gap: 14 }}>
           <Toggle
-            checked={settings.showStaffBadge ?? false}
-            onChange={(v) => updateSettings({ showStaffBadge: v })}
+            checked={staffDisplaySettings.showStaffBadge ?? false}
+            onChange={(v) => updateStaffDisplaySettings({ showStaffBadge: v })}
             label="イニシャルバッジを表示する"
           />
           <Toggle
-            checked={settings.showStaffColor ?? false}
-            onChange={(v) => updateSettings({ showStaffColor: v })}
+            checked={staffDisplaySettings.showStaffColor ?? false}
+            onChange={(v) => updateStaffDisplaySettings({ showStaffColor: v })}
             label="スタッフごとに色をつける"
           />
         </div>

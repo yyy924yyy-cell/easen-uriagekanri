@@ -46,6 +46,11 @@ service cloud.firestore {
       allow write: if isOwner();
     }
 
+    match /settings/staffDisplay {
+      allow read: if isSignedIn();
+      allow write: if isOwner();
+    }
+
     match /settings/{settingId} {
       allow read: if isOwner();
       allow write: if isOwner();
