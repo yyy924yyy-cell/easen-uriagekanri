@@ -20,7 +20,6 @@ interface Props {
   onSubmit: (value: SalesRecordFormValue) => Promise<void>;
   onCancel: () => void;
   onDelete?: () => Promise<void>;
-  showPaidToggle?: boolean;
 }
 
 function errorMessage(err: unknown): string {
@@ -41,7 +40,6 @@ export default function SalesRecordForm({
   onSubmit,
   onCancel,
   onDelete,
-  showPaidToggle = true,
 }: Props) {
   const [storeId, setStoreId] = useState(initial?.storeId ?? stores[0]?.id ?? '');
 
@@ -62,7 +60,7 @@ export default function SalesRecordForm({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
     initial?.paymentMethod ?? 'cash'
   );
-  const [isPaid, setIsPaid] = useState(initial?.isPaid ?? showPaidToggle === false);
+  const [isPaid] = useState(initial?.isPaid ?? true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -258,7 +256,6 @@ export default function SalesRecordForm({
       </div>
 
       <Toggle checked={nominated} onChange={setNominated} label="指名" />
-      {showPaidToggle && <Toggle checked={isPaid} onChange={setIsPaid} label="会計済" />}
 
       {error && (
         <p style={{ color: 'var(--color-danger)', fontSize: 14, margin: 0 }}>{error}</p>
