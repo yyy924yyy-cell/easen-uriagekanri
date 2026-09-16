@@ -764,13 +764,6 @@ function SettingsTab({
   );
 }
 
-function daysUntil(ts: unknown): number | null {
-  const t = ts as { toDate?: () => Date } | null | undefined;
-  if (!t || typeof t.toDate !== 'function') return null;
-  const ms = t.toDate().getTime() - Date.now();
-  return Math.max(0, Math.ceil(ms / (24 * 60 * 60 * 1000)));
-}
-
 function TrashTab() {
   const [deletedRecords, setDeletedRecords] = useState<SalesRecord[]>([]);
   const [deletedCasts, setDeletedCasts] = useState<Cast[]>([]);
@@ -792,7 +785,7 @@ function TrashTab() {
   return (
     <div style={{ display: 'grid', gap: 20 }}>
       <p style={{ color: 'var(--color-text-muted)', fontSize: 14 }}>
-        削除したものは、ここから30日以内であれば復元できます。30日を過ぎると自動的に完全削除されます。
+        削除したものは、完全に削除するまでここに残り続けます。誤って削除した場合は「復元」で元に戻せます。
       </p>
 
       {empty && <p style={{ color: 'var(--color-text-muted)' }}>ゴミ箱は空です。</p>}
@@ -802,7 +795,6 @@ function TrashTab() {
           <h3 style={{ fontSize: 15, marginBottom: 10 }}>売上記録</h3>
           <div style={{ display: 'grid', gap: 10 }}>
             {deletedRecords.map((r) => {
-              const left = daysUntil(r.purgeAt);
               return (
                 <div key={r.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                   <div style={{ flex: 1 }}>
@@ -812,7 +804,6 @@ function TrashTab() {
                     </div>
                     <div style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>
                       合計 ¥{r.totalAmount.toLocaleString()}
-                      {left != null && `・あと${left}日で完全削除`}
                     </div>
                   </div>
                   <button className="btn btn-outline" onClick={() => restoreSalesRecord(r.id)}>
@@ -840,14 +831,10 @@ function TrashTab() {
           <h3 style={{ fontSize: 15, marginBottom: 10 }}>スタッフ</h3>
           <div style={{ display: 'grid', gap: 10 }}>
             {deletedCasts.map((c) => {
-              const left = daysUntil(c.purgeAt);
               return (
                 <div key={c.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 700 }}>{c.name}</div>
-                    {left != null && (
-                      <div style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>あと{left}日で完全削除</div>
-                    )}
                   </div>
                   <button className="btn btn-outline" onClick={() => restoreCast(c.id)}>
                     復元
@@ -874,14 +861,10 @@ function TrashTab() {
           <h3 style={{ fontSize: 15, marginBottom: 10 }}>店舗</h3>
           <div style={{ display: 'grid', gap: 10 }}>
             {deletedStores.map((s) => {
-              const left = daysUntil(s.purgeAt);
               return (
                 <div key={s.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 700 }}>{s.name}</div>
-                    {left != null && (
-                      <div style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>あと{left}日で完全削除</div>
-                    )}
                   </div>
                   <button className="btn btn-outline" onClick={() => restoreStore(s.id)}>
                     復元
