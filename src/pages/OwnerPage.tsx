@@ -210,7 +210,14 @@ function ReportTab({
         >
           売上明細をエクセル出力
         </button>
+        <button className="btn btn-outline" onClick={() => window.print()}>
+          PDF出力（印刷）
+        </button>
       </div>
+      <div className="print-area">
+        <h3 style={{ marginBottom: 12, display: 'none' }} className="print-only-title">
+          歩合給・指名料レポート（{yearMonth}）
+        </h3>
       <div
         style={{
           display: 'grid',
@@ -289,7 +296,7 @@ function ReportTab({
               <th>歩合給</th>
               <th>指名件数</th>
               <th>指名料合計</th>
-              <th></th>
+              <th className="no-print"></th>
             </tr>
           </thead>
           <tbody>
@@ -301,7 +308,7 @@ function ReportTab({
                 <td>¥{r.commissionAmount.toLocaleString()}</td>
                 <td>{r.nominationCount}件</td>
                 <td>¥{r.nominationAmount.toLocaleString()}</td>
-                <td>
+                <td className="no-print">
                   <button
                     className="btn btn-outline"
                     style={{ padding: '6px 14px', fontSize: 13 }}
@@ -314,6 +321,7 @@ function ReportTab({
             ))}
           </tbody>
         </table>
+      </div>
       </div>
     </div>
   );
@@ -425,11 +433,14 @@ function RecordsTab({
   return (
     <div className="card">
       <div style={{ marginBottom: 14, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
-        <button className="btn btn-primary" onClick={() => setCreating(true)}>
+        <button className="btn btn-primary no-print" onClick={() => setCreating(true)}>
           ＋ 記録を追加
         </button>
+        <button className="btn btn-outline no-print" onClick={() => window.print()}>
+          PDF出力（印刷）
+        </button>
       </div>
-      <div style={{ marginBottom: 14, display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'center' }}>
+      <div className="no-print" style={{ marginBottom: 14, display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'center' }}>
         <div>
           <label className="field-label" style={{ margin: 0, display: 'inline-block', marginRight: 8 }}>
             スタッフで絞り込み
@@ -476,6 +487,7 @@ function RecordsTab({
           </div>
         )}
       </div>
+      <div className="print-area">
       <div className="table-scroll">
         <table className="data-table">
           <thead>
@@ -486,7 +498,7 @@ function RecordsTab({
               <th>店舗</th>
               <th>合計金額</th>
               <th>指名</th>
-              <th></th>
+              <th className="no-print"></th>
             </tr>
           </thead>
           <tbody>
@@ -498,7 +510,7 @@ function RecordsTab({
                 <td>{storeNameById[r.storeId]}</td>
                 <td>¥{r.totalAmount.toLocaleString()}</td>
                 <td>{r.nominated ? '有' : '無'}</td>
-                <td>
+                <td className="no-print">
                   <button className="btn btn-outline" style={{ padding: '6px 12px' }} onClick={() => setEditing(r)}>
                     編集
                   </button>
@@ -507,6 +519,7 @@ function RecordsTab({
             ))}
           </tbody>
         </table>
+      </div>
       </div>
     </div>
   );
