@@ -12,15 +12,24 @@ import {
   subscribeStores,
   subscribeSettings,
   subscribeStaffDisplaySettings,
+  subscribeDeletedSalesRecords,
+  subscribeDeletedCasts,
+  subscribeDeletedStores,
   addSalesRecord,
   updateSalesRecord,
   deleteSalesRecord,
+  restoreSalesRecord,
+  permanentlyDeleteSalesRecord,
   addCast,
   updateCast,
   deleteCast,
+  restoreCast,
+  permanentlyDeleteCast,
   addStore,
   updateStore,
   deleteStore,
+  restoreStore,
+  permanentlyDeleteStore,
   updateSettings,
   updateStaffDisplaySettings,
   todayString,
@@ -32,7 +41,7 @@ import {
 } from '../lib/excelExport';
 import type { Cast, GeneralSettings, StaffDisplaySettings, SalesRecord, Store } from '../types';
 
-type Tab = 'records' | 'report' | 'casts' | 'stores' | 'settings';
+type Tab = 'records' | 'report' | 'casts' | 'stores' | 'settings' | 'trash';
 
 export default function OwnerPage() {
   const [tab, setTab] = useState<Tab>('report');
@@ -80,6 +89,9 @@ export default function OwnerPage() {
           <button className={tab === 'settings' ? 'active' : ''} onClick={() => setTab('settings')}>
             設定
           </button>
+          <button className={tab === 'trash' ? 'active' : ''} onClick={() => setTab('trash')}>
+            🗑 ゴミ箱
+          </button>
         </div>
 
         {tab === 'report' && (
@@ -115,6 +127,7 @@ export default function OwnerPage() {
         {tab === 'settings' && (
           <SettingsTab settings={settings} staffDisplaySettings={staffDisplaySettings} />
         )}
+        {tab === 'trash' && <TrashTab />}
       </div>
       <FloatingTopButton
         side="left"
@@ -747,6 +760,148 @@ function SettingsTab({
         </div>
       </div>
       <ChangeOwnerPasswordForm />
+    </div>
+  );
+}
+
+function daysUntil(ts: unknown): number | null {
+  const t = ts as { toDate?: () => Date } | null | undefined;
+  if (!t || typeof t.toDate !== 'function') return null;
+  const ms = t.toDate().getTime() - Date.now();
+  return Math.max(0, Math.ceil(ms / (24 * 60 * 60 * 1000)));
+}
+
+function TrashTab() {
+  const [deletedRecords, setDeletedRecords] = useState<SalesRecord[]>([]);
+  const [deletedCasts, setDeletedCasts] = useState<Cast[]>([]);
+  const [deletedStores, setDeletedStores] = useState<Store[]>([]);
+  const [casts, setCasts] = useState<Cast[]>([]);
+  const [stores, setStores] = useState<Store[]>([]);
+
+  useEffect(() => subscribeDeletedSalesRecords(setDeletedRecords), []);
+  useEffect(() => subscribeDeletedCasts(setDeletedCasts), []);
+  useEffect(() => subscribeDeletedStores(setDeletedStores), []);
+  useEffect(() => subscribeCasts(setCasts), []);
+  useEffect(() => subscribeStores(setStores), []);
+
+  const castNameById = Object.fromEntries(casts.map((c) => [c.id, c.name]));
+  const storeNameById = Object.fromEntries(stores.map((s) => [s.id, s.name]));
+
+  const empty = deletedRecords.length === 0 && deletedCasts.length === 0 && deletedStores.length === 0;
+
+  return (
+    <div style={{ display: 'grid', gap: 20 }}>
+      <p style={{ color: 'var(--color-text-muted)', fontSize: 14 }}>
+        削除したものは、ここから30日以内であれば復元できます。30日を過ぎると自動的に完全削除されます。
+      </p>
+
+      {empty && <p style={{ color: 'var(--color-text-muted)' }}>ゴミ箱は空です。</p>}
+
+      {deletedRecords.length > 0 && (
+        <div>
+          <h3 style={{ fontSize: 15, marginBottom: 10 }}>売上記録</h3>
+          <div style={{ display: 'grid', gap: 10 }}>
+            {deletedRecords.map((r) => {
+              const left = daysUntil(r.purgeAt);
+              return (
+                <div key={r.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700 }}>
+                      {r.date} ・ {castNameById[r.castId] ?? '（不明なスタッフ）'} ・{' '}
+                      {storeNameById[r.storeId] ?? '（不明な店舗）'}
+                    </div>
+                    <div style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>
+                      合計 ¥{r.totalAmount.toLocaleString()}
+                      {left != null && `・あと${left}日で完全削除`}
+                    </div>
+                  </div>
+                  <button className="btn btn-outline" onClick={() => restoreSalesRecord(r.id)}>
+                    復元
+                  </button>
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => {
+                      if (window.confirm('完全に削除します。元に戻せませんがよろしいですか？')) {
+                        permanentlyDeleteSalesRecord(r.id);
+                      }
+                    }}
+                  >
+                    完全に削除
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {deletedCasts.length > 0 && (
+        <div>
+          <h3 style={{ fontSize: 15, marginBottom: 10 }}>スタッフ</h3>
+          <div style={{ display: 'grid', gap: 10 }}>
+            {deletedCasts.map((c) => {
+              const left = daysUntil(c.purgeAt);
+              return (
+                <div key={c.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700 }}>{c.name}</div>
+                    {left != null && (
+                      <div style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>あと{left}日で完全削除</div>
+                    )}
+                  </div>
+                  <button className="btn btn-outline" onClick={() => restoreCast(c.id)}>
+                    復元
+                  </button>
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => {
+                      if (window.confirm('完全に削除します。元に戻せませんがよろしいですか？')) {
+                        permanentlyDeleteCast(c.id);
+                      }
+                    }}
+                  >
+                    完全に削除
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {deletedStores.length > 0 && (
+        <div>
+          <h3 style={{ fontSize: 15, marginBottom: 10 }}>店舗</h3>
+          <div style={{ display: 'grid', gap: 10 }}>
+            {deletedStores.map((s) => {
+              const left = daysUntil(s.purgeAt);
+              return (
+                <div key={s.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700 }}>{s.name}</div>
+                    {left != null && (
+                      <div style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>あと{left}日で完全削除</div>
+                    )}
+                  </div>
+                  <button className="btn btn-outline" onClick={() => restoreStore(s.id)}>
+                    復元
+                  </button>
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => {
+                      if (window.confirm('完全に削除します。元に戻せませんがよろしいですか？')) {
+                        permanentlyDeleteStore(s.id);
+                      }
+                    }}
+                  >
+                    完全に削除
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

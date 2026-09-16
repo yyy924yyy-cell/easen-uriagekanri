@@ -70,10 +70,9 @@ service cloud.firestore {
          isTodayJst(resource.data.date) &&
          resource.data.date == request.resource.data.date);
 
-      allow delete: if isOwner() ||
-        (isStaff() &&
-         resource.data.createdBy == 'staff' &&
-         isTodayJst(resource.data.date));
+      // 通常の削除操作はソフトデリート（updateでdeletedAt/purgeAtを付与）で行うため、
+      // 実際のFirestore delete（ゴミ箱からの完全削除・TTLの自動削除を除く）はオーナーのみ許可
+      allow delete: if isOwner();
     }
 
     match /{document=**} {

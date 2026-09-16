@@ -7,6 +7,8 @@ export interface Store {
   name: string;
   order: number;
   createdAt: number;
+  deletedAt?: Timestamp | null; // ゴミ箱に入った時刻（未削除ならなし）
+  purgeAt?: Timestamp | null; // 完全自動削除される予定時刻（削除から30日後）
 }
 
 export interface Cast {
@@ -16,6 +18,8 @@ export interface Cast {
   active: boolean;
   order: number;
   createdAt: number;
+  deletedAt?: Timestamp | null;
+  purgeAt?: Timestamp | null;
 }
 
 export type PaymentMethod = 'cash' | 'card' | 'emoney';
@@ -39,6 +43,8 @@ export interface SalesRecord {
   createdAt: Timestamp | number | null; // 記録した時刻（サーバー時刻）
   updatedAt: Timestamp | number | null;
   createdBy: Role;
+  deletedAt?: Timestamp | null; // ゴミ箱に入った時刻（未削除ならなし）
+  purgeAt?: Timestamp | null; // 完全自動削除される予定時刻（削除から30日後）
 }
 
 export interface GeneralSettings {

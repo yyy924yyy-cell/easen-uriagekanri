@@ -59,7 +59,7 @@ export default function BackupReminderBanner({ records, casts, settings }: Props
       }}
     >
       <div style={{ fontSize: 14, color: 'var(--color-text)' }}>
-        📋 今月も終わりです。今月分のデータをエクセル出力してバックアップを取っておきましょう。
+        📋 今月分のデータをバックアップ保存してください。「今すぐエクセル出力」でファイルをダウンロードしたら、端末内に置いたままにせず、Googleドライブへの保存やメール送付など、外部への保存もあわせてお願いします。
         {error && (
           <div style={{ color: 'var(--color-danger)', fontSize: 13, marginTop: 6 }}>{error}</div>
         )}

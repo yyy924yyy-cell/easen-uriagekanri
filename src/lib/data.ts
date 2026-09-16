@@ -11,15 +11,35 @@ import {
   orderBy,
   where,
   serverTimestamp,
+  Timestamp,
+  deleteField,
 } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 import type { Cast, Store, SalesRecord, GeneralSettings, StaffDisplaySettings, Role } from '../types';
+
+const TRASH_RETENTION_DAYS = 30;
+
+function purgeAtValue() {
+  return Timestamp.fromDate(new Date(Date.now() + TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000));
+}
+
+const SOFT_DELETE_PATCH = { deletedAt: serverTimestamp(), purgeAt: purgeAtValue() };
+const RESTORE_PATCH = { deletedAt: deleteField(), purgeAt: deleteField() };
 
 // ---- Casts ----
 export function subscribeCasts(cb: (casts: Cast[]) => void) {
   const q = query(collection(db, 'casts'), orderBy('order', 'asc'));
   return onSnapshot(q, (snap) => {
-    cb(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Cast, 'id'>) })));
+    const all = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Cast, 'id'>) }));
+    cb(all.filter((c) => !c.deletedAt));
+  });
+}
+
+export function subscribeDeletedCasts(cb: (casts: Cast[]) => void) {
+  const q = query(collection(db, 'casts'), orderBy('order', 'asc'));
+  return onSnapshot(q, (snap) => {
+    const all = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Cast, 'id'>) }));
+    cb(all.filter((c) => !!c.deletedAt));
   });
 }
 
@@ -38,6 +58,14 @@ export async function updateCast(id: string, patch: Partial<Cast>) {
 }
 
 export async function deleteCast(id: string) {
+  await updateDoc(doc(db, 'casts', id), SOFT_DELETE_PATCH);
+}
+
+export async function restoreCast(id: string) {
+  await updateDoc(doc(db, 'casts', id), RESTORE_PATCH);
+}
+
+export async function permanentlyDeleteCast(id: string) {
   await deleteDoc(doc(db, 'casts', id));
 }
 
@@ -45,7 +73,16 @@ export async function deleteCast(id: string) {
 export function subscribeStores(cb: (stores: Store[]) => void) {
   const q = query(collection(db, 'stores'), orderBy('order', 'asc'));
   return onSnapshot(q, (snap) => {
-    cb(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Store, 'id'>) })));
+    const all = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Store, 'id'>) }));
+    cb(all.filter((s) => !s.deletedAt));
+  });
+}
+
+export function subscribeDeletedStores(cb: (stores: Store[]) => void) {
+  const q = query(collection(db, 'stores'), orderBy('order', 'asc'));
+  return onSnapshot(q, (snap) => {
+    const all = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Store, 'id'>) }));
+    cb(all.filter((s) => !!s.deletedAt));
   });
 }
 
@@ -58,6 +95,14 @@ export async function updateStore(id: string, patch: Partial<Store>) {
 }
 
 export async function deleteStore(id: string) {
+  await updateDoc(doc(db, 'stores', id), SOFT_DELETE_PATCH);
+}
+
+export async function restoreStore(id: string) {
+  await updateDoc(doc(db, 'stores', id), RESTORE_PATCH);
+}
+
+export async function permanentlyDeleteStore(id: string) {
   await deleteDoc(doc(db, 'stores', id));
 }
 
@@ -97,7 +142,16 @@ export async function updateStaffDisplaySettings(patch: Partial<StaffDisplaySett
 export function subscribeAllSalesRecords(cb: (records: SalesRecord[]) => void) {
   const q = query(collection(db, 'salesRecords'), orderBy('date', 'desc'));
   return onSnapshot(q, (snap) => {
-    cb(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<SalesRecord, 'id'>) })));
+    const all = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<SalesRecord, 'id'>) }));
+    cb(all.filter((r) => !r.deletedAt));
+  });
+}
+
+export function subscribeDeletedSalesRecords(cb: (records: SalesRecord[]) => void) {
+  const q = query(collection(db, 'salesRecords'), orderBy('date', 'desc'));
+  return onSnapshot(q, (snap) => {
+    const all = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<SalesRecord, 'id'>) }));
+    cb(all.filter((r) => !!r.deletedAt));
   });
 }
 
@@ -106,7 +160,9 @@ export function subscribeCastSalesRecords(castId: string, cb: (records: SalesRec
   // 未作成の場合エラーになるため、orderByは使わずクライアント側で並び替える。
   const q = query(collection(db, 'salesRecords'), where('castId', '==', castId));
   return onSnapshot(q, (snap) => {
-    const records = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<SalesRecord, 'id'>) }));
+    const records = snap.docs
+      .map((d) => ({ id: d.id, ...(d.data() as Omit<SalesRecord, 'id'>) }))
+      .filter((r) => !r.deletedAt);
     records.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
     cb(records);
   });
@@ -157,7 +213,17 @@ export async function updateSalesRecord(
   });
 }
 
+// 削除（ゴミ箱へ移動。実際には消さず、30日後に自動削除される印をつける）
 export async function deleteSalesRecord(id: string) {
+  await updateDoc(doc(db, 'salesRecords', id), SOFT_DELETE_PATCH);
+}
+
+export async function restoreSalesRecord(id: string) {
+  await updateDoc(doc(db, 'salesRecords', id), RESTORE_PATCH);
+}
+
+// ゴミ箱からの完全削除（元に戻せません。オーナーのみ）
+export async function permanentlyDeleteSalesRecord(id: string) {
   await deleteDoc(doc(db, 'salesRecords', id));
 }
 
