@@ -1,3 +1,4 @@
+import { formatRecordTime } from './formatTime';
 import * as XLSX from 'xlsx';
 import type { Cast, SalesRecord } from '../types';
 
@@ -66,6 +67,7 @@ export function exportSalesRecordsToExcel(
     .filter((r) => r.date.startsWith(yearMonth))
     .map((r) => ({
       日付: r.date,
+      時刻: formatRecordTime(r.createdAt),
       店舗: storeNameById[r.storeId] ?? '',
       キャスト: castNameById[r.castId] ?? '',
       施術金額: r.treatmentAmount,

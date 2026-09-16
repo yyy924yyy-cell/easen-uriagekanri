@@ -5,6 +5,7 @@ import Toggle from '../components/Toggle';
 import FloatingTopButton from '../components/FloatingTopButton';
 import BackupReminderBanner from '../components/BackupReminderBanner';
 import ChangeOwnerPasswordForm from '../components/ChangeOwnerPasswordForm';
+import { formatRecordTime } from '../lib/formatTime';
 import {
   subscribeAllSalesRecords,
   subscribeCasts,
@@ -468,6 +469,7 @@ function RecordsTab({
             <tr>
               <th className="sticky-col">スタッフ</th>
               <th>日付</th>
+              <th>時刻</th>
               <th>店舗</th>
               <th>合計金額</th>
               <th>指名</th>
@@ -479,6 +481,7 @@ function RecordsTab({
               <tr key={r.id}>
                 <td className="sticky-col">{castNameById[r.castId]}</td>
                 <td>{r.date}</td>
+                <td>{formatRecordTime(r.createdAt) || '—'}</td>
                 <td>{storeNameById[r.storeId]}</td>
                 <td>¥{r.totalAmount.toLocaleString()}</td>
                 <td>{r.nominated ? '有' : '無'}</td>

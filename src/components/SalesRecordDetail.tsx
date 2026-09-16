@@ -1,4 +1,5 @@
 import type { SalesRecord, Store } from '../types';
+import { formatRecordTime } from '../lib/formatTime';
 
 const PAYMENT_METHOD_LABEL: Record<SalesRecord['paymentMethod'], string> = {
   cash: '現金',
@@ -29,6 +30,9 @@ export default function SalesRecordDetail({ record, stores, canEdit, onEdit, onB
   return (
     <div className="card">
       <Row label="日付" value={record.date} />
+      {formatRecordTime(record.createdAt) && (
+        <Row label="記録時刻" value={formatRecordTime(record.createdAt)} />
+      )}
       <Row label="店舗" value={storeName} />
       <Row label="施術金額" value={`¥${record.treatmentAmount.toLocaleString()}`} />
       {record.treatmentMemo && <Row label="施術の備考" value={record.treatmentMemo} />}

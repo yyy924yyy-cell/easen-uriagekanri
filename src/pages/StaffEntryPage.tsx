@@ -14,6 +14,7 @@ import Header from '../components/Header';
 import SalesRecordForm, { type SalesRecordFormValue } from '../components/SalesRecordForm';
 import SalesRecordDetail from '../components/SalesRecordDetail';
 import FloatingTopButton from '../components/FloatingTopButton';
+import { formatRecordTime } from '../lib/formatTime';
 
 type Mode = 'list' | 'new' | 'view' | 'edit';
 
@@ -141,7 +142,15 @@ export default function StaffEntryPage() {
           {records.map((r) => (
             <div key={r.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <div style={{ fontWeight: 700 }}>{r.date}</div>
+                <div style={{ fontWeight: 700 }}>
+                  {r.date}
+                  {formatRecordTime(r.createdAt) && (
+                    <span style={{ color: 'var(--color-text-muted)', fontWeight: 500, fontSize: 14 }}>
+                      {' '}
+                      {formatRecordTime(r.createdAt)}
+                    </span>
+                  )}
+                </div>
                 <div style={{ color: 'var(--color-text-muted)', fontSize: 14 }}>
                   合計 ¥{r.totalAmount.toLocaleString()}
                   {r.nominated && '・指名あり'}

@@ -1,3 +1,5 @@
+import type { Timestamp } from 'firebase/firestore';
+
 export type Role = 'owner' | 'staff';
 
 export interface Store {
@@ -34,8 +36,8 @@ export interface SalesRecord {
   paymentMethod: PaymentMethod;
   isPaid: boolean; // 会計済
   menu?: string; // 将来のメニュー機能用（今は未使用）
-  createdAt: number;
-  updatedAt: number;
+  createdAt: Timestamp | number | null; // 記録した時刻（サーバー時刻）
+  updatedAt: Timestamp | number | null;
   createdBy: Role;
 }
 
