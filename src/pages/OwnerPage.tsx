@@ -6,6 +6,7 @@ import FloatingTopButton from '../components/FloatingTopButton';
 import BackupReminderBanner from '../components/BackupReminderBanner';
 import ChangeOwnerPasswordForm from '../components/ChangeOwnerPasswordForm';
 import { formatRecordTime } from '../lib/formatTime';
+import { backupAllDataToDrive } from '../lib/appsScriptBackup';
 import {
   subscribeAllSalesRecords,
   subscribeCasts,
@@ -125,7 +126,13 @@ export default function OwnerPage() {
         {tab === 'casts' && <CastsTab casts={casts} />}
         {tab === 'stores' && <StoresTab stores={stores} />}
         {tab === 'settings' && (
-          <SettingsTab settings={settings} staffDisplaySettings={staffDisplaySettings} />
+          <SettingsTab
+            settings={settings}
+            staffDisplaySettings={staffDisplaySettings}
+            records={records}
+            casts={casts}
+            stores={stores}
+          />
         )}
         {tab === 'trash' && <TrashTab />}
       </div>
@@ -734,13 +741,30 @@ function StoreRow({ store }: { store: Store }) {
 function SettingsTab({
   settings,
   staffDisplaySettings,
+  records,
+  casts,
+  stores,
 }: {
   settings: GeneralSettings;
   staffDisplaySettings: StaffDisplaySettings;
+  records: SalesRecord[];
+  casts: Cast[];
+  stores: Store[];
 }) {
   const [fee, setFee] = useState(String(settings.nominationFee));
+  const [backupState, setBackupState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
 
   useEffect(() => setFee(String(settings.nominationFee)), [settings.nominationFee]);
+
+  async function handleManualBackup() {
+    setBackupState('sending');
+    try {
+      await backupAllDataToDrive(records, casts, stores, settings, currentYearMonth());
+      setBackupState('sent');
+    } catch {
+      setBackupState('error');
+    }
+  }
 
   return (
     <div style={{ display: 'grid', gap: 20 }}>
@@ -771,6 +795,25 @@ function SettingsTab({
             label="スタッフごとに色をつける"
           />
         </div>
+      </div>
+      <div className="card" style={{ maxWidth: 360 }}>
+        <h3 style={{ fontSize: 16, marginBottom: 10 }}>Googleドライブへの手動バックアップ</h3>
+        <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginBottom: 14 }}>
+          月末を待たずに、いつでもその時点のデータをGoogleドライブへ送信できます。
+        </p>
+        <button className="btn btn-primary" onClick={handleManualBackup} disabled={backupState === 'sending'}>
+          {backupState === 'sending' ? '送信中…' : '今すぐバックアップ'}
+        </button>
+        {backupState === 'sent' && (
+          <p style={{ color: 'var(--color-gold-dark)', fontSize: 13, marginTop: 10 }}>
+            送信しました。Googleドライブの「EASEN売上管理バックアップ」フォルダをご確認ください。
+          </p>
+        )}
+        {backupState === 'error' && (
+          <p style={{ color: 'var(--color-danger)', fontSize: 13, marginTop: 10 }}>
+            送信に失敗しました。通信状態を確認してもう一度お試しください。
+          </p>
+        )}
       </div>
       <ChangeOwnerPasswordForm />
     </div>
