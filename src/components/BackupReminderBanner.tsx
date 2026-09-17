@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { isLastDayOfMonthNow, isAfterReminderHour, currentYearMonth } from '../lib/backupReminder';
-import { buildCastMonthlyReport, exportCastMonthlyReportToExcel } from '../lib/excelExport';
+import {
+  buildCastMonthlyReport,
+  exportCastMonthlyReportToExcel,
+  buildCastMonthlyReportBlob,
+} from '../lib/excelExport';
+import { uploadFileToDrive } from '../lib/googleDrive';
 import { updateSettings } from '../lib/data';
 import type { Cast, GeneralSettings, SalesRecord } from '../types';
 
@@ -14,6 +19,8 @@ export default function BackupReminderBanner({ records, casts, settings }: Props
   const [tick, setTick] = useState(0);
   const [hiddenForNow, setHiddenForNow] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploaded, setUploaded] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setTick((t) => t + 1), 60_000);
@@ -31,14 +38,34 @@ export default function BackupReminderBanner({ records, casts, settings }: Props
 
   if (!visible) return null;
 
-  async function handleExport() {
-    setError(null);
-    const rows = buildCastMonthlyReport(casts, records, yearMonth, settings.nominationFee);
-    exportCastMonthlyReportToExcel(rows, yearMonth);
+  async function markDone() {
     try {
       await updateSettings({ lastBackupMonth: yearMonth });
     } catch {
       setError('出力は完了しましたが、完了の記録に失敗しました。次回もこのバナーが表示される場合があります。');
+    }
+  }
+
+  function handleExport() {
+    setError(null);
+    const rows = buildCastMonthlyReport(casts, records, yearMonth, settings.nominationFee);
+    exportCastMonthlyReportToExcel(rows, yearMonth);
+    markDone();
+  }
+
+  async function handleUploadToDrive() {
+    setError(null);
+    setUploading(true);
+    try {
+      const rows = buildCastMonthlyReport(casts, records, yearMonth, settings.nominationFee);
+      const blob = buildCastMonthlyReportBlob(rows, yearMonth);
+      await uploadFileToDrive(blob, `歩合給_指名料_${yearMonth}.xlsx`);
+      setUploaded(true);
+      await markDone();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Googleドライブへのアップロードに失敗しました');
+    } finally {
+      setUploading(false);
     }
   }
 
@@ -59,12 +86,17 @@ export default function BackupReminderBanner({ records, casts, settings }: Props
       }}
     >
       <div style={{ fontSize: 14, color: 'var(--color-text)' }}>
-        📋 今月分のデータをバックアップ保存してください。「今すぐエクセル出力」でファイルをダウンロードしたら、端末内に置いたままにせず、Googleドライブへの保存やメール送付など、外部への保存もあわせてお願いします。
+        📋 今月分のデータをバックアップ保存してください。「Googleドライブへ保存」なら1回のタップで外部保存まで完了します。エクセルをダウンロードして手動で保存していただいても構いません。
+        {uploaded && (
+          <div style={{ color: 'var(--color-gold-dark)', fontSize: 13, marginTop: 6 }}>
+            Googleドライブへの保存が完了しました。
+          </div>
+        )}
         {error && (
           <div style={{ color: 'var(--color-danger)', fontSize: 13, marginTop: 6 }}>{error}</div>
         )}
       </div>
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <button
           className="btn btn-outline"
           style={{ padding: '8px 14px', fontSize: 13 }}
@@ -73,11 +105,19 @@ export default function BackupReminderBanner({ records, casts, settings }: Props
           あとで
         </button>
         <button
-          className="btn btn-primary"
+          className="btn btn-outline"
           style={{ padding: '8px 16px', fontSize: 13 }}
           onClick={handleExport}
         >
-          今すぐエクセル出力
+          エクセルをダウンロード
+        </button>
+        <button
+          className="btn btn-primary"
+          style={{ padding: '8px 16px', fontSize: 13 }}
+          onClick={handleUploadToDrive}
+          disabled={uploading}
+        >
+          {uploading ? 'アップロード中…' : 'Googleドライブへ保存'}
         </button>
       </div>
     </div>

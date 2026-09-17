@@ -42,6 +42,11 @@ export function exportCastMonthlyReportToExcel(
   rows: CastMonthlyReportRow[],
   yearMonth: string
 ) {
+  const wb = buildCastMonthlyReportWorkbook(rows, yearMonth);
+  XLSX.writeFile(wb, `歩合給_指名料_${yearMonth}.xlsx`);
+}
+
+function buildCastMonthlyReportWorkbook(rows: CastMonthlyReportRow[], yearMonth: string) {
   const data = rows.map((r) => ({
     スタッフ名: r.castName,
     売上合計: r.totalSales,
@@ -54,7 +59,16 @@ export function exportCastMonthlyReportToExcel(
   const ws = XLSX.utils.json_to_sheet(data);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, yearMonth);
-  XLSX.writeFile(wb, `歩合給_指名料_${yearMonth}.xlsx`);
+  return wb;
+}
+
+// ダウンロードせず、Googleドライブへのアップロードなどに使うためのBlobを作る
+export function buildCastMonthlyReportBlob(rows: CastMonthlyReportRow[], yearMonth: string): Blob {
+  const wb = buildCastMonthlyReportWorkbook(rows, yearMonth);
+  const array = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  return new Blob([array], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
 }
 
 export function exportSalesRecordsToExcel(
