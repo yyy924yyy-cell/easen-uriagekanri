@@ -3,7 +3,8 @@ import type { Cast, GeneralSettings, SalesRecord, Store } from '../types';
 
 // Google Apps Scriptで公開したWebアプリのURL。
 // 「デプロイ」後に発行されるURL（https://script.google.com/macros/s/.../exec）に書き換える。
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/【ここをデプロイ後のIDに置き換え】/exec';
+const APPS_SCRIPT_URL =
+  'https://script.google.com/macros/s/AKfycbxoNvUA2KnEGnrJHNDI2BUD3ijwqiEOTeXblHlFEjxC-oUJYRT6-4jkRyBwNhZDtooh/exec';
 
 // Apps Script側にも同じ文字列を設定する「合言葉」。第三者に知られても大きな実害はないが、
 // 念のため公開リポジトリのコードそのままではなく、必要なら適宜差し替えて良い。
