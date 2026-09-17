@@ -1,21 +1,18 @@
 import { useEffect, useState } from 'react';
 import { isLastDayOfMonthNow, isAfterReminderHour, currentYearMonth } from '../lib/backupReminder';
-import {
-  buildCastMonthlyReport,
-  exportCastMonthlyReportToExcel,
-  buildCastMonthlyReportBlob,
-} from '../lib/excelExport';
-import { uploadFileToDrive } from '../lib/googleDrive';
+import { buildCastMonthlyReport, exportCastMonthlyReportToExcel } from '../lib/excelExport';
+import { backupAllDataToDrive } from '../lib/appsScriptBackup';
 import { updateSettings } from '../lib/data';
-import type { Cast, GeneralSettings, SalesRecord } from '../types';
+import type { Cast, GeneralSettings, SalesRecord, Store } from '../types';
 
 interface Props {
   records: SalesRecord[];
   casts: Cast[];
+  stores: Store[];
   settings: GeneralSettings;
 }
 
-export default function BackupReminderBanner({ records, casts, settings }: Props) {
+export default function BackupReminderBanner({ records, casts, stores, settings }: Props) {
   const [tick, setTick] = useState(0);
   const [hiddenForNow, setHiddenForNow] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +39,7 @@ export default function BackupReminderBanner({ records, casts, settings }: Props
     try {
       await updateSettings({ lastBackupMonth: yearMonth });
     } catch {
-      setError('出力は完了しましたが、完了の記録に失敗しました。次回もこのバナーが表示される場合があります。');
+      setError('送信は完了しましたが、完了の記録に失敗しました。次回もこのバナーが表示される場合があります。');
     }
   }
 
@@ -53,17 +50,15 @@ export default function BackupReminderBanner({ records, casts, settings }: Props
     markDone();
   }
 
-  async function handleUploadToDrive() {
+  async function handleBackupToDrive() {
     setError(null);
     setUploading(true);
     try {
-      const rows = buildCastMonthlyReport(casts, records, yearMonth, settings.nominationFee);
-      const blob = buildCastMonthlyReportBlob(rows, yearMonth);
-      await uploadFileToDrive(blob, `歩合給_指名料_${yearMonth}.xlsx`);
+      await backupAllDataToDrive(records, casts, stores, settings, yearMonth);
       setUploaded(true);
       await markDone();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Googleドライブへのアップロードに失敗しました');
+    } catch {
+      setError('Googleドライブへの送信でエラーが発生しました。通信状態を確認してもう一度お試しください。');
     } finally {
       setUploading(false);
     }
@@ -89,7 +84,7 @@ export default function BackupReminderBanner({ records, casts, settings }: Props
         📋 今月分のデータをバックアップ保存してください。「Googleドライブへ保存」なら1回のタップで外部保存まで完了します。エクセルをダウンロードして手動で保存していただいても構いません。
         {uploaded && (
           <div style={{ color: 'var(--color-gold-dark)', fontSize: 13, marginTop: 6 }}>
-            Googleドライブへの保存が完了しました。
+            Googleドライブへ送信しました（反映まで少し時間がかかる場合があります）。
           </div>
         )}
         {error && (
@@ -114,10 +109,10 @@ export default function BackupReminderBanner({ records, casts, settings }: Props
         <button
           className="btn btn-primary"
           style={{ padding: '8px 16px', fontSize: 13 }}
-          onClick={handleUploadToDrive}
+          onClick={handleBackupToDrive}
           disabled={uploading}
         >
-          {uploading ? 'アップロード中…' : 'Googleドライブへ保存'}
+          {uploading ? '送信中…' : 'Googleドライブへ保存'}
         </button>
       </div>
     </div>
