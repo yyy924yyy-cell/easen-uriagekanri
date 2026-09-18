@@ -76,6 +76,14 @@ export default function OwnerPage() {
   useEffect(() => subscribeSettings(setSettings), []);
   useEffect(() => subscribeStaffDisplaySettings(setStaffDisplaySettings), []);
 
+  const seededDiscount = useRef(false);
+  useEffect(() => {
+    if (!seededDiscount.current && discountTypes.length === 0) {
+      seededDiscount.current = true;
+      addDiscountType('当日割', 0);
+    }
+  }, [discountTypes]);
+
   const castNameById = useMemo(
     () => Object.fromEntries(casts.map((c) => [c.id, c.name])),
     [casts]
@@ -765,14 +773,6 @@ function StoreRow({ store }: { store: Store }) {
 
 function DiscountTypesTab({ discountTypes }: { discountTypes: DiscountType[] }) {
   const [name, setName] = useState('');
-  const seeded = useRef(false);
-
-  useEffect(() => {
-    if (!seeded.current && discountTypes.length === 0) {
-      seeded.current = true;
-      addDiscountType('当日割', 0);
-    }
-  }, [discountTypes]);
 
   return (
     <div style={{ display: 'grid', gap: 16 }}>
