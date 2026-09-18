@@ -22,7 +22,19 @@ export interface Cast {
   purgeAt?: Timestamp | null;
 }
 
+export interface DiscountType {
+  id: string;
+  name: string; // 例：「当日割」
+  order: number;
+  active: boolean;
+  createdAt: number;
+  deletedAt?: Timestamp | null;
+  purgeAt?: Timestamp | null;
+}
+
 export type PaymentMethod = 'cash' | 'card' | 'emoney';
+
+export type DiscountMode = 'yen' | 'percent';
 
 export interface SalesRecord {
   id: string;
@@ -33,7 +45,12 @@ export interface SalesRecord {
   treatmentMemo?: string; // 施術金額の備考
   optionAmount: number; // 追加オプション金額
   optionMemo?: string; // 追加オプション金額の備考
-  totalAmount: number; // 合計金額 = treatmentAmount + optionAmount（歩合給の計算対象）
+  discountTypeId?: string; // 各種割引の種類
+  discountMode?: DiscountMode; // 'yen'=金額指定 / 'percent'=割合指定
+  discountValue?: number; // 入力された値（円 or %）
+  discountAmount?: number; // 実際に引かれた金額（自動計算値）
+  discountMemo?: string; // 各種割引の備考
+  totalAmount: number; // 合計金額 = (treatmentAmount + optionAmount) - discountAmount（歩合給の計算対象）
   pointsUsed: number; // 使用ポイント
   paymentAmount: number; // 客の支払金額 = totalAmount - pointsUsed
   nominated: boolean; // 指名有無

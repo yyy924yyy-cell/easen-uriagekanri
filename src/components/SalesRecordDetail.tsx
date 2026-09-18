@@ -1,4 +1,4 @@
-import type { SalesRecord, Store } from '../types';
+import type { DiscountType, SalesRecord, Store } from '../types';
 import { formatRecordTime } from '../lib/formatTime';
 
 const PAYMENT_METHOD_LABEL: Record<SalesRecord['paymentMethod'], string> = {
@@ -19,13 +19,22 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 interface Props {
   record: SalesRecord;
   stores: Store[];
+  discountTypes: DiscountType[];
   canEdit: boolean;
   onEdit: () => void;
   onBack: () => void;
 }
 
-export default function SalesRecordDetail({ record, stores, canEdit, onEdit, onBack }: Props) {
+export default function SalesRecordDetail({
+  record,
+  stores,
+  discountTypes,
+  canEdit,
+  onEdit,
+  onBack,
+}: Props) {
   const storeName = stores.find((s) => s.id === record.storeId)?.name ?? '';
+  const discountTypeName = discountTypes.find((t) => t.id === record.discountTypeId)?.name;
 
   return (
     <div className="card">
@@ -38,6 +47,13 @@ export default function SalesRecordDetail({ record, stores, canEdit, onEdit, onB
       {record.treatmentMemo && <Row label="施術の備考" value={record.treatmentMemo} />}
       <Row label="追加オプション金額" value={`¥${record.optionAmount.toLocaleString()}`} />
       {record.optionMemo && <Row label="オプションの備考" value={record.optionMemo} />}
+      {!!record.discountAmount && (
+        <Row
+          label={`各種割引${discountTypeName ? `（${discountTypeName}）` : ''}`}
+          value={`－¥${record.discountAmount.toLocaleString()}`}
+        />
+      )}
+      {record.discountMemo && <Row label="割引の備考" value={record.discountMemo} />}
       <Row label="合計金額" value={`¥${record.totalAmount.toLocaleString()}`} />
       <Row label="使用ポイント" value={record.pointsUsed.toLocaleString()} />
       <Row label="お客様の支払金額" value={`¥${record.paymentAmount.toLocaleString()}`} />

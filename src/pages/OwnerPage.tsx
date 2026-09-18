@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Header from '../components/Header';
 import SalesRecordForm, { type SalesRecordFormValue } from '../components/SalesRecordForm';
 import Toggle from '../components/Toggle';
@@ -11,11 +11,13 @@ import {
   subscribeAllSalesRecords,
   subscribeCasts,
   subscribeStores,
+  subscribeDiscountTypes,
   subscribeSettings,
   subscribeStaffDisplaySettings,
   subscribeDeletedSalesRecords,
   subscribeDeletedCasts,
   subscribeDeletedStores,
+  subscribeDeletedDiscountTypes,
   addSalesRecord,
   updateSalesRecord,
   deleteSalesRecord,
@@ -31,6 +33,11 @@ import {
   deleteStore,
   restoreStore,
   permanentlyDeleteStore,
+  addDiscountType,
+  updateDiscountType,
+  deleteDiscountType,
+  restoreDiscountType,
+  permanentlyDeleteDiscountType,
   updateSettings,
   updateStaffDisplaySettings,
   todayString,
@@ -40,15 +47,23 @@ import {
   exportCastMonthlyReportToExcel,
   exportSalesRecordsToExcel,
 } from '../lib/excelExport';
-import type { Cast, GeneralSettings, StaffDisplaySettings, SalesRecord, Store } from '../types';
+import type {
+  Cast,
+  Store,
+  DiscountType,
+  GeneralSettings,
+  StaffDisplaySettings,
+  SalesRecord,
+} from '../types';
 
-type Tab = 'records' | 'report' | 'casts' | 'stores' | 'settings' | 'trash';
+type Tab = 'records' | 'report' | 'casts' | 'stores' | 'discounts' | 'settings' | 'trash';
 
 export default function OwnerPage() {
   const [tab, setTab] = useState<Tab>('report');
   const [records, setRecords] = useState<SalesRecord[]>([]);
   const [casts, setCasts] = useState<Cast[]>([]);
   const [stores, setStores] = useState<Store[]>([]);
+  const [discountTypes, setDiscountTypes] = useState<DiscountType[]>([]);
   const [settings, setSettings] = useState<GeneralSettings>({ nominationFee: 500 });
   const [staffDisplaySettings, setStaffDisplaySettings] = useState<StaffDisplaySettings>({});
   const [recordsFilterCast, setRecordsFilterCast] = useState('');
@@ -57,6 +72,7 @@ export default function OwnerPage() {
   useEffect(() => subscribeAllSalesRecords(setRecords), []);
   useEffect(() => subscribeCasts(setCasts), []);
   useEffect(() => subscribeStores(setStores), []);
+  useEffect(() => subscribeDiscountTypes(setDiscountTypes), []);
   useEffect(() => subscribeSettings(setSettings), []);
   useEffect(() => subscribeStaffDisplaySettings(setStaffDisplaySettings), []);
 
@@ -87,6 +103,9 @@ export default function OwnerPage() {
           <button className={tab === 'stores' ? 'active' : ''} onClick={() => setTab('stores')}>
             店舗管理
           </button>
+          <button className={tab === 'discounts' ? 'active' : ''} onClick={() => setTab('discounts')}>
+            割引管理
+          </button>
           <button className={tab === 'settings' ? 'active' : ''} onClick={() => setTab('settings')}>
             設定
           </button>
@@ -115,6 +134,7 @@ export default function OwnerPage() {
             records={records}
             casts={casts}
             stores={stores}
+            discountTypes={discountTypes}
             castNameById={castNameById}
             storeNameById={storeNameById}
             filterCast={recordsFilterCast}
@@ -125,6 +145,7 @@ export default function OwnerPage() {
         )}
         {tab === 'casts' && <CastsTab casts={casts} />}
         {tab === 'stores' && <StoresTab stores={stores} />}
+        {tab === 'discounts' && <DiscountTypesTab discountTypes={discountTypes} />}
         {tab === 'settings' && (
           <SettingsTab
             settings={settings}
@@ -338,6 +359,7 @@ function RecordsTab({
   records,
   casts,
   stores,
+  discountTypes,
   castNameById,
   storeNameById,
   filterCast,
@@ -348,6 +370,7 @@ function RecordsTab({
   records: SalesRecord[];
   casts: Cast[];
   stores: Store[];
+  discountTypes: DiscountType[];
   castNameById: Record<string, string>;
   storeNameById: Record<string, string>;
   filterCast: string;
@@ -374,6 +397,7 @@ function RecordsTab({
       <div style={{ maxWidth: 520 }}>
         <SalesRecordForm
           stores={stores}
+          discountTypes={discountTypes}
           initial={editing}
           onCancel={() => setEditing(null)}
           onDelete={async () => {
@@ -420,6 +444,7 @@ function RecordsTab({
         </div>
         <SalesRecordForm
           stores={stores}
+          discountTypes={discountTypes}
           onCancel={() => setCreating(false)}
           onSubmit={async (value: SalesRecordFormValue) => {
             if (!newCastId) return;
@@ -738,6 +763,86 @@ function StoreRow({ store }: { store: Store }) {
   );
 }
 
+function DiscountTypesTab({ discountTypes }: { discountTypes: DiscountType[] }) {
+  const [name, setName] = useState('');
+  const seeded = useRef(false);
+
+  useEffect(() => {
+    if (!seeded.current && discountTypes.length === 0) {
+      seeded.current = true;
+      addDiscountType('当日割', 0);
+    }
+  }, [discountTypes]);
+
+  return (
+    <div style={{ display: 'grid', gap: 16 }}>
+      <p style={{ color: 'var(--color-text-muted)', fontSize: 14 }}>
+        ここで登録した割引の種類が、スタッフ・オーナーの入力画面の「各種割引」欄に反映されます（2件以上でプルダウン選択になります）。
+      </p>
+      <div className="card">
+        <h3 style={{ marginBottom: 14 }}>新しい割引の種類を追加</h3>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <input
+            className="field-input"
+            style={{ maxWidth: 220 }}
+            placeholder="割引名（例：当日割）"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <button
+            className="btn btn-primary"
+            onClick={async () => {
+              if (!name.trim()) return;
+              await addDiscountType(name.trim(), nextOrder(discountTypes));
+              setName('');
+            }}
+          >
+            追加
+          </button>
+        </div>
+      </div>
+      <div style={{ display: 'grid', gap: 10 }}>
+        {discountTypes.map((t) => (
+          <DiscountTypeRow key={t.id} discountType={t} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DiscountTypeRow({ discountType }: { discountType: DiscountType }) {
+  const [name, setName] = useState(discountType.name);
+
+  useEffect(() => setName(discountType.name), [discountType.name]);
+
+  return (
+    <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+      <input
+        className="field-input"
+        style={{ maxWidth: 220 }}
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onBlur={() => {
+          if (name.trim() && name !== discountType.name) {
+            updateDiscountType(discountType.id, { name: name.trim() });
+          }
+        }}
+      />
+      <button
+        className="btn btn-danger"
+        style={{ marginLeft: 'auto' }}
+        onClick={() => {
+          if (window.confirm(`「${discountType.name}」を本当に削除しますか？この操作は取り消せません。`)) {
+            deleteDiscountType(discountType.id);
+          }
+        }}
+      >
+        削除
+      </button>
+    </div>
+  );
+}
+
 function SettingsTab({
   settings,
   staffDisplaySettings,
@@ -824,19 +929,25 @@ function TrashTab() {
   const [deletedRecords, setDeletedRecords] = useState<SalesRecord[]>([]);
   const [deletedCasts, setDeletedCasts] = useState<Cast[]>([]);
   const [deletedStores, setDeletedStores] = useState<Store[]>([]);
+  const [deletedDiscountTypes, setDeletedDiscountTypes] = useState<DiscountType[]>([]);
   const [casts, setCasts] = useState<Cast[]>([]);
   const [stores, setStores] = useState<Store[]>([]);
 
   useEffect(() => subscribeDeletedSalesRecords(setDeletedRecords), []);
   useEffect(() => subscribeDeletedCasts(setDeletedCasts), []);
   useEffect(() => subscribeDeletedStores(setDeletedStores), []);
+  useEffect(() => subscribeDeletedDiscountTypes(setDeletedDiscountTypes), []);
   useEffect(() => subscribeCasts(setCasts), []);
   useEffect(() => subscribeStores(setStores), []);
 
   const castNameById = Object.fromEntries(casts.map((c) => [c.id, c.name]));
   const storeNameById = Object.fromEntries(stores.map((s) => [s.id, s.name]));
 
-  const empty = deletedRecords.length === 0 && deletedCasts.length === 0 && deletedStores.length === 0;
+  const empty =
+    deletedRecords.length === 0 &&
+    deletedCasts.length === 0 &&
+    deletedStores.length === 0 &&
+    deletedDiscountTypes.length === 0;
 
   return (
     <div style={{ display: 'grid', gap: 20 }}>
@@ -938,6 +1049,34 @@ function TrashTab() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {deletedDiscountTypes.length > 0 && (
+        <div>
+          <h3 style={{ fontSize: 15, marginBottom: 10 }}>割引の種類</h3>
+          <div style={{ display: 'grid', gap: 10 }}>
+            {deletedDiscountTypes.map((t) => (
+              <div key={t.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 700 }}>{t.name}</div>
+                </div>
+                <button className="btn btn-outline" onClick={() => restoreDiscountType(t.id)}>
+                  復元
+                </button>
+                <button
+                  className="btn btn-danger"
+                  onClick={() => {
+                    if (window.confirm('完全に削除します。元に戻せませんがよろしいですか？')) {
+                      permanentlyDeleteDiscountType(t.id);
+                    }
+                  }}
+                >
+                  完全に削除
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       )}

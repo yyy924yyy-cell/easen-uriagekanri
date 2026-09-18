@@ -41,6 +41,11 @@ service cloud.firestore {
       allow write: if isOwner();
     }
 
+    match /discountTypes/{discountTypeId} {
+      allow read: if isSignedIn();
+      allow write: if isOwner();
+    }
+
     match /stores/{storeId} {
       allow read: if isSignedIn();
       allow write: if isOwner();

@@ -4,12 +4,13 @@ import {
   subscribeCastSalesRecords,
   subscribeStores,
   subscribeCasts,
+  subscribeDiscountTypes,
   addSalesRecord,
   updateSalesRecord,
   deleteSalesRecord,
   todayString,
 } from '../lib/data';
-import type { SalesRecord, Store, Cast } from '../types';
+import type { SalesRecord, Store, Cast, DiscountType } from '../types';
 import Header from '../components/Header';
 import SalesRecordForm, { type SalesRecordFormValue } from '../components/SalesRecordForm';
 import SalesRecordDetail from '../components/SalesRecordDetail';
@@ -23,11 +24,13 @@ export default function StaffEntryPage() {
   const [records, setRecords] = useState<SalesRecord[]>([]);
   const [stores, setStores] = useState<Store[]>([]);
   const [casts, setCasts] = useState<Cast[]>([]);
+  const [discountTypes, setDiscountTypes] = useState<DiscountType[]>([]);
   const [mode, setMode] = useState<Mode>('list');
   const [selected, setSelected] = useState<SalesRecord | null>(null);
 
   useEffect(() => subscribeStores(setStores), []);
   useEffect(() => subscribeCasts(setCasts), []);
+  useEffect(() => subscribeDiscountTypes(setDiscountTypes), []);
   useEffect(() => {
     if (!selectedCastId) return;
     return subscribeCastSalesRecords(selectedCastId, setRecords);
@@ -50,6 +53,7 @@ export default function StaffEntryPage() {
         <div className="page-container" style={{ maxWidth: 520 }}>
           <SalesRecordForm
             stores={stores}
+            discountTypes={discountTypes}
             onCancel={() => setMode('list')}
             onSubmit={async (value: SalesRecordFormValue) => {
               await addSalesRecord({
@@ -75,6 +79,7 @@ export default function StaffEntryPage() {
           <SalesRecordDetail
             record={selected}
             stores={stores}
+            discountTypes={discountTypes}
             canEdit={selected.date === today}
             onEdit={() => setMode('edit')}
             onBack={() => setMode('list')}
@@ -92,6 +97,7 @@ export default function StaffEntryPage() {
         <div className="page-container" style={{ maxWidth: 520 }}>
           <SalesRecordForm
             stores={stores}
+            discountTypes={discountTypes}
             initial={selected}
             onCancel={() => setMode('view')}
             onDelete={async () => {

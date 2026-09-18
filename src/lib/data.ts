@@ -15,7 +15,15 @@ import {
   deleteField,
 } from 'firebase/firestore';
 import { db } from './firebaseConfig';
-import type { Cast, Store, SalesRecord, GeneralSettings, StaffDisplaySettings, Role } from '../types';
+import type {
+  Cast,
+  Store,
+  DiscountType,
+  SalesRecord,
+  GeneralSettings,
+  StaffDisplaySettings,
+  Role,
+} from '../types';
 
 const TRASH_RETENTION_DAYS = 30;
 
@@ -106,6 +114,43 @@ export async function permanentlyDeleteStore(id: string) {
   await deleteDoc(doc(db, 'stores', id));
 }
 
+// ---- Discount types（各種割引の種類） ----
+export function subscribeDiscountTypes(cb: (types: DiscountType[]) => void) {
+  const q = query(collection(db, 'discountTypes'), orderBy('order', 'asc'));
+  return onSnapshot(q, (snap) => {
+    const all = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<DiscountType, 'id'>) }));
+    cb(all.filter((t) => !t.deletedAt));
+  });
+}
+
+export function subscribeDeletedDiscountTypes(cb: (types: DiscountType[]) => void) {
+  const q = query(collection(db, 'discountTypes'), orderBy('order', 'asc'));
+  return onSnapshot(q, (snap) => {
+    const all = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<DiscountType, 'id'>) }));
+    cb(all.filter((t) => !!t.deletedAt));
+  });
+}
+
+export async function addDiscountType(name: string, order: number) {
+  await addDoc(collection(db, 'discountTypes'), { name, active: true, order, createdAt: Date.now() });
+}
+
+export async function updateDiscountType(id: string, patch: Partial<DiscountType>) {
+  await updateDoc(doc(db, 'discountTypes', id), patch as Record<string, unknown>);
+}
+
+export async function deleteDiscountType(id: string) {
+  await updateDoc(doc(db, 'discountTypes', id), SOFT_DELETE_PATCH);
+}
+
+export async function restoreDiscountType(id: string) {
+  await updateDoc(doc(db, 'discountTypes', id), RESTORE_PATCH);
+}
+
+export async function permanentlyDeleteDiscountType(id: string) {
+  await deleteDoc(doc(db, 'discountTypes', id));
+}
+
 // ---- Settings（オーナーのみ閲覧可） ----
 const SETTINGS_DOC = 'settings/general';
 
@@ -176,6 +221,10 @@ export interface NewSalesRecordInput {
   treatmentMemo?: string;
   optionAmount: number;
   optionMemo?: string;
+  discountTypeId?: string;
+  discountMode?: SalesRecord['discountMode'];
+  discountValue?: number;
+  discountMemo?: string;
   pointsUsed: number;
   nominated: boolean;
   paymentMethod: SalesRecord['paymentMethod'];
@@ -183,13 +232,25 @@ export interface NewSalesRecordInput {
   createdBy: Role;
 }
 
+function computeDiscountAmount(input: NewSalesRecordInput, subtotal: number): number {
+  if (!input.discountValue) return 0;
+  if (input.discountMode === 'percent') {
+    return Math.round((subtotal * input.discountValue) / 100);
+  }
+  return input.discountValue;
+}
+
 export async function addSalesRecord(input: NewSalesRecordInput) {
-  const totalAmount = input.treatmentAmount + input.optionAmount;
+  const subtotal = input.treatmentAmount + input.optionAmount;
+  const discountAmount = computeDiscountAmount(input, subtotal);
+  const totalAmount = subtotal - discountAmount;
   const paymentAmount = totalAmount - input.pointsUsed;
   await addDoc(collection(db, 'salesRecords'), {
     ...input,
     treatmentMemo: input.treatmentMemo ?? '',
     optionMemo: input.optionMemo ?? '',
+    discountMemo: input.discountMemo ?? '',
+    discountAmount,
     totalAmount,
     paymentAmount,
     createdAt: serverTimestamp(),
@@ -201,12 +262,16 @@ export async function updateSalesRecord(
   id: string,
   input: Omit<NewSalesRecordInput, 'createdBy'>
 ) {
-  const totalAmount = input.treatmentAmount + input.optionAmount;
+  const subtotal = input.treatmentAmount + input.optionAmount;
+  const discountAmount = computeDiscountAmount(input as NewSalesRecordInput, subtotal);
+  const totalAmount = subtotal - discountAmount;
   const paymentAmount = totalAmount - input.pointsUsed;
   await updateDoc(doc(db, 'salesRecords', id), {
     ...input,
     treatmentMemo: input.treatmentMemo ?? '',
     optionMemo: input.optionMemo ?? '',
+    discountMemo: input.discountMemo ?? '',
+    discountAmount,
     totalAmount,
     paymentAmount,
     updatedAt: serverTimestamp(),

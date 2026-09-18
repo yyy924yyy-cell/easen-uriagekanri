@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { PaymentMethod, SalesRecord, Store } from '../types';
+import type { DiscountMode, DiscountType, PaymentMethod, SalesRecord, Store } from '../types';
 import Toggle from './Toggle';
 
 export interface SalesRecordFormValue {
@@ -8,6 +8,10 @@ export interface SalesRecordFormValue {
   treatmentMemo?: string;
   optionAmount: number;
   optionMemo?: string;
+  discountTypeId?: string;
+  discountMode?: DiscountMode;
+  discountValue?: number;
+  discountMemo?: string;
   pointsUsed: number;
   nominated: boolean;
   paymentMethod: PaymentMethod;
@@ -16,6 +20,7 @@ export interface SalesRecordFormValue {
 
 interface Props {
   stores: Store[];
+  discountTypes: DiscountType[];
   initial?: SalesRecord;
   onSubmit: (value: SalesRecordFormValue) => Promise<void>;
   onCancel: () => void;
@@ -36,6 +41,7 @@ function errorMessage(err: unknown): string {
 
 export default function SalesRecordForm({
   stores,
+  discountTypes,
   initial,
   onSubmit,
   onCancel,
@@ -56,6 +62,17 @@ export default function SalesRecordForm({
   const [optionMemo, setOptionMemo] = useState(initial?.optionMemo ?? '');
 
   const [pointsUsed, setPointsUsed] = useState(String(initial?.pointsUsed ?? '0'));
+
+  const [discountTypeId, setDiscountTypeId] = useState(initial?.discountTypeId ?? '');
+  const [discountMode, setDiscountMode] = useState<DiscountMode>(initial?.discountMode ?? 'yen');
+  const [discountValue, setDiscountValue] = useState(String(initial?.discountValue ?? '0'));
+  const [showDiscountMemo, setShowDiscountMemo] = useState(!!initial?.discountMemo);
+  const [discountMemo, setDiscountMemo] = useState(initial?.discountMemo ?? '');
+
+  useEffect(() => {
+    if (!discountTypeId && discountTypes.length > 0) setDiscountTypeId(discountTypes[0].id);
+  }, [discountTypes, discountTypeId]);
+
   const [nominated, setNominated] = useState(initial?.nominated ?? false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
     initial?.paymentMethod ?? 'cash'
@@ -63,16 +80,51 @@ export default function SalesRecordForm({
   const [isPaid] = useState(initial?.isPaid ?? true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmingNegative, setConfirmingNegative] = useState(false);
 
   const treatment = Number(treatmentAmount) || 0;
   const option = Number(optionAmount) || 0;
   const points = Number(pointsUsed) || 0;
-  const total = treatment + option;
+  const discountInput = Number(discountValue) || 0;
+  const subtotal = treatment + option;
+  const discountAmount =
+    discountMode === 'percent' ? Math.round((subtotal * discountInput) / 100) : discountInput;
+  const total = subtotal - discountAmount;
   const payment = total - points;
+
+  function buildValue(): SalesRecordFormValue {
+    return {
+      storeId,
+      treatmentAmount: treatment,
+      treatmentMemo: showTreatmentMemo ? treatmentMemo.trim() : '',
+      optionAmount: option,
+      optionMemo: showOptionMemo ? optionMemo.trim() : '',
+      discountTypeId: discountTypeId || undefined,
+      discountMode,
+      discountValue: discountInput,
+      discountMemo: showDiscountMemo ? discountMemo.trim() : '',
+      pointsUsed: points,
+      nominated,
+      paymentMethod,
+      isPaid,
+    };
+  }
+
+  async function doSave() {
+    setSaving(true);
+    try {
+      await onSubmit(buildValue());
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setConfirmingNegative(false);
 
     if (!storeId) {
       setError('店舗を選択してください。');
@@ -82,29 +134,16 @@ export default function SalesRecordForm({
       setError('施術金額を入力してください。');
       return;
     }
+    if (total < 0) {
+      setConfirmingNegative(true);
+      return;
+    }
     if (payment < 0) {
       setError('使用ポイントが合計金額を超えています。');
       return;
     }
 
-    setSaving(true);
-    try {
-      await onSubmit({
-        storeId,
-        treatmentAmount: treatment,
-        treatmentMemo: showTreatmentMemo ? treatmentMemo.trim() : '',
-        optionAmount: option,
-        optionMemo: showOptionMemo ? optionMemo.trim() : '',
-        pointsUsed: points,
-        nominated,
-        paymentMethod,
-        isPaid,
-      });
-    } catch (err) {
-      setError(errorMessage(err));
-    } finally {
-      setSaving(false);
-    }
+    await doSave();
   }
 
   return (
@@ -211,11 +250,6 @@ export default function SalesRecordForm({
       </div>
 
       <div>
-        <span className="field-label">合計金額</span>
-        <div className="readonly-amount">¥{total.toLocaleString()}</div>
-      </div>
-
-      <div>
         <label className="field-label">使用ポイント</label>
         <input
           className="field-input"
@@ -226,6 +260,94 @@ export default function SalesRecordForm({
           onChange={(e) => setPointsUsed(e.target.value)}
           placeholder="0"
         />
+      </div>
+
+      <div>
+        <label className="field-label">各種割引</label>
+        {discountTypes.length > 1 ? (
+          <select
+            className="field-input"
+            style={{ marginBottom: 8 }}
+            value={discountTypeId}
+            onChange={(e) => setDiscountTypeId(e.target.value)}
+          >
+            {discountTypes.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+        ) : (
+          discountTypes.length === 1 && (
+            <div style={{ color: 'var(--color-text-muted)', fontSize: 13, marginBottom: 8 }}>
+              {discountTypes[0].name}
+            </div>
+          )
+        )}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input
+            className="field-input"
+            type="number"
+            inputMode="numeric"
+            min="0"
+            value={discountValue}
+            onChange={(e) => setDiscountValue(e.target.value)}
+            placeholder="0"
+            style={{ flex: 1 }}
+          />
+          <div className="segmented" style={{ maxWidth: 140 }}>
+            <button
+              type="button"
+              className={discountMode === 'yen' ? 'active' : ''}
+              onClick={() => setDiscountMode('yen')}
+            >
+              円
+            </button>
+            <button
+              type="button"
+              className={discountMode === 'percent' ? 'active' : ''}
+              onClick={() => setDiscountMode('percent')}
+            >
+              ％
+            </button>
+          </div>
+        </div>
+        {discountAmount > 0 && (
+          <div style={{ color: 'var(--color-text-muted)', fontSize: 13, marginTop: 6 }}>
+            割引額：¥{discountAmount.toLocaleString()}
+          </div>
+        )}
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            marginTop: 8,
+            fontSize: 13,
+            color: 'var(--color-text-muted)',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={showDiscountMemo}
+            onChange={(e) => setShowDiscountMemo(e.target.checked)}
+          />
+          備考を書く
+        </label>
+        {showDiscountMemo && (
+          <textarea
+            className="field-input"
+            style={{ marginTop: 8, minHeight: 60 }}
+            value={discountMemo}
+            onChange={(e) => setDiscountMemo(e.target.value)}
+            placeholder="割引についての備考"
+          />
+        )}
+      </div>
+
+      <div>
+        <span className="field-label">合計金額（歩合の対象額・自動計算）</span>
+        <div className="readonly-amount">¥{total.toLocaleString()}</div>
       </div>
 
       <div>
@@ -256,6 +378,42 @@ export default function SalesRecordForm({
       </div>
 
       <Toggle checked={nominated} onChange={setNominated} label="指名" />
+
+      {confirmingNegative && (
+        <div
+          style={{
+            background: 'var(--color-bg)',
+            border: '1px solid var(--color-danger)',
+            borderRadius: 'var(--radius-sm)',
+            padding: 14,
+          }}
+        >
+          <p style={{ color: 'var(--color-danger)', fontSize: 14, margin: 0, marginBottom: 10 }}>
+            割引額が大きく、合計金額（歩合の対象額）がマイナス（¥{total.toLocaleString()}）になります。このまま保存しますか？
+          </p>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              type="button"
+              className="btn btn-outline"
+              style={{ flex: 1 }}
+              onClick={() => setConfirmingNegative(false)}
+            >
+              いいえ
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              style={{ flex: 1 }}
+              onClick={() => {
+                setConfirmingNegative(false);
+                doSave();
+              }}
+            >
+              はい、保存する
+            </button>
+          </div>
+        </div>
+      )}
 
       {error && (
         <p style={{ color: 'var(--color-danger)', fontSize: 14, margin: 0 }}>{error}</p>

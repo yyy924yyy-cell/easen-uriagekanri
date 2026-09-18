@@ -88,6 +88,8 @@ export function exportSalesRecordsToExcel(
       施術備考: r.treatmentMemo ?? '',
       追加オプション: r.optionAmount,
       オプション備考: r.optionMemo ?? '',
+      割引額: r.discountAmount ?? 0,
+      割引備考: r.discountMemo ?? '',
       合計金額: r.totalAmount,
       使用ポイント: r.pointsUsed,
       支払金額: r.paymentAmount,
