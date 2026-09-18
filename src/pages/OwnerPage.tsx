@@ -80,7 +80,7 @@ export default function OwnerPage() {
   useEffect(() => {
     if (!seededDiscount.current && discountTypes.length === 0) {
       seededDiscount.current = true;
-      addDiscountType('当日割', 0);
+      addDiscountType('当日割', 0, 'percent', 10);
     }
   }, [discountTypes]);
 
@@ -773,28 +773,51 @@ function StoreRow({ store }: { store: Store }) {
 
 function DiscountTypesTab({ discountTypes }: { discountTypes: DiscountType[] }) {
   const [name, setName] = useState('');
+  const [mode, setMode] = useState<DiscountType['mode']>('percent');
+  const [value, setValue] = useState('10');
 
   return (
     <div style={{ display: 'grid', gap: 16 }}>
       <p style={{ color: 'var(--color-text-muted)', fontSize: 14 }}>
-        ここで登録した割引の種類が、スタッフ・オーナーの入力画面の「各種割引」欄に反映されます（2件以上でプルダウン選択になります）。
+        ここで登録した割引の種類が、スタッフ・オーナーの入力画面の「各種割引」欄に反映されます（2件以上でプルダウン選択になります）。割合・金額と数値はここで決めた通りに固定で適用されます。
       </p>
       <div className="card">
         <h3 style={{ marginBottom: 14 }}>新しい割引の種類を追加</h3>
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
           <input
             className="field-input"
-            style={{ maxWidth: 220 }}
-            placeholder="割引名（例：当日割）"
+            style={{ maxWidth: 200 }}
+            placeholder="割引名（例：紹介割）"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
+          <input
+            className="field-input"
+            style={{ maxWidth: 100 }}
+            type="number"
+            min="0"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+          />
+          <div className="segmented" style={{ maxWidth: 140 }}>
+            <button type="button" className={mode === 'yen' ? 'active' : ''} onClick={() => setMode('yen')}>
+              円
+            </button>
+            <button
+              type="button"
+              className={mode === 'percent' ? 'active' : ''}
+              onClick={() => setMode('percent')}
+            >
+              ％
+            </button>
+          </div>
           <button
             className="btn btn-primary"
             onClick={async () => {
               if (!name.trim()) return;
-              await addDiscountType(name.trim(), nextOrder(discountTypes));
+              await addDiscountType(name.trim(), nextOrder(discountTypes), mode, Number(value) || 0);
               setName('');
+              setValue('10');
             }}
           >
             追加
@@ -812,14 +835,16 @@ function DiscountTypesTab({ discountTypes }: { discountTypes: DiscountType[] }) 
 
 function DiscountTypeRow({ discountType }: { discountType: DiscountType }) {
   const [name, setName] = useState(discountType.name);
+  const [value, setValue] = useState(String(discountType.value));
 
   useEffect(() => setName(discountType.name), [discountType.name]);
+  useEffect(() => setValue(String(discountType.value)), [discountType.value]);
 
   return (
-    <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+    <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
       <input
         className="field-input"
-        style={{ maxWidth: 220 }}
+        style={{ maxWidth: 200 }}
         value={name}
         onChange={(e) => setName(e.target.value)}
         onBlur={() => {
@@ -828,6 +853,36 @@ function DiscountTypeRow({ discountType }: { discountType: DiscountType }) {
           }
         }}
       />
+      <input
+        className="field-input"
+        style={{ maxWidth: 100 }}
+        type="number"
+        min="0"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={() => {
+          const n = Number(value);
+          if (!Number.isNaN(n) && n !== discountType.value) {
+            updateDiscountType(discountType.id, { value: n });
+          }
+        }}
+      />
+      <div className="segmented" style={{ maxWidth: 140 }}>
+        <button
+          type="button"
+          className={discountType.mode === 'yen' ? 'active' : ''}
+          onClick={() => updateDiscountType(discountType.id, { mode: 'yen' })}
+        >
+          円
+        </button>
+        <button
+          type="button"
+          className={discountType.mode === 'percent' ? 'active' : ''}
+          onClick={() => updateDiscountType(discountType.id, { mode: 'percent' })}
+        >
+          ％
+        </button>
+      </div>
       <button
         className="btn btn-danger"
         style={{ marginLeft: 'auto' }}

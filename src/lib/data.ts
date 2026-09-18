@@ -131,8 +131,20 @@ export function subscribeDeletedDiscountTypes(cb: (types: DiscountType[]) => voi
   });
 }
 
-export async function addDiscountType(name: string, order: number) {
-  await addDoc(collection(db, 'discountTypes'), { name, active: true, order, createdAt: Date.now() });
+export async function addDiscountType(
+  name: string,
+  order: number,
+  mode: DiscountType['mode'] = 'percent',
+  value: number = 0
+) {
+  await addDoc(collection(db, 'discountTypes'), {
+    name,
+    mode,
+    value,
+    active: true,
+    order,
+    createdAt: Date.now(),
+  });
 }
 
 export async function updateDiscountType(id: string, patch: Partial<DiscountType>) {

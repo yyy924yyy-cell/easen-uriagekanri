@@ -25,6 +25,8 @@ export interface Cast {
 export interface DiscountType {
   id: string;
   name: string; // 例：「当日割」
+  mode: DiscountMode; // 'yen'=金額固定 / 'percent'=割合固定
+  value: number; // 固定の割引値（円 or %）
   order: number;
   active: boolean;
   createdAt: number;

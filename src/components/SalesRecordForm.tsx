@@ -63,9 +63,8 @@ export default function SalesRecordForm({
 
   const [pointsUsed, setPointsUsed] = useState(String(initial?.pointsUsed ?? '0'));
 
+  const [applyDiscount, setApplyDiscount] = useState(!!initial?.discountTypeId);
   const [discountTypeId, setDiscountTypeId] = useState(initial?.discountTypeId ?? '');
-  const [discountMode, setDiscountMode] = useState<DiscountMode>(initial?.discountMode ?? 'yen');
-  const [discountValue, setDiscountValue] = useState(String(initial?.discountValue ?? '0'));
   const [showDiscountMemo, setShowDiscountMemo] = useState(!!initial?.discountMemo);
   const [discountMemo, setDiscountMemo] = useState(initial?.discountMemo ?? '');
 
@@ -85,10 +84,15 @@ export default function SalesRecordForm({
   const treatment = Number(treatmentAmount) || 0;
   const option = Number(optionAmount) || 0;
   const points = Number(pointsUsed) || 0;
-  const discountInput = Number(discountValue) || 0;
   const subtotal = treatment + option;
-  const discountAmount =
-    discountMode === 'percent' ? Math.round((subtotal * discountInput) / 100) : discountInput;
+  const selectedDiscountType = discountTypes.find((t) => t.id === discountTypeId);
+  const discountMode: DiscountMode = selectedDiscountType?.mode ?? 'yen';
+  const discountRawValue = selectedDiscountType?.value ?? 0;
+  const discountAmount = !applyDiscount
+    ? 0
+    : discountMode === 'percent'
+      ? Math.round((subtotal * discountRawValue) / 100)
+      : discountRawValue;
   const total = subtotal - discountAmount;
   const payment = total - points;
 
@@ -99,10 +103,10 @@ export default function SalesRecordForm({
       treatmentMemo: showTreatmentMemo ? treatmentMemo.trim() : '',
       optionAmount: option,
       optionMemo: showOptionMemo ? optionMemo.trim() : '',
-      discountTypeId: discountTypeId || undefined,
-      discountMode,
-      discountValue: discountInput,
-      discountMemo: showDiscountMemo ? discountMemo.trim() : '',
+      discountTypeId: applyDiscount ? discountTypeId || undefined : undefined,
+      discountMode: applyDiscount ? discountMode : undefined,
+      discountValue: applyDiscount ? discountRawValue : undefined,
+      discountMemo: applyDiscount && showDiscountMemo ? discountMemo.trim() : '',
       pointsUsed: points,
       nominated,
       paymentMethod,
@@ -263,85 +267,78 @@ export default function SalesRecordForm({
       </div>
 
       <div>
-        <label className="field-label">各種割引</label>
-        {discountTypes.length > 1 ? (
-          <select
-            className="field-input"
-            style={{ marginBottom: 8 }}
-            value={discountTypeId}
-            onChange={(e) => setDiscountTypeId(e.target.value)}
-          >
-            {discountTypes.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-        ) : (
-          discountTypes.length === 1 && (
-            <div style={{ color: 'var(--color-text-muted)', fontSize: 13, marginBottom: 8 }}>
-              {discountTypes[0].name}
-            </div>
-          )
-        )}
-        <div style={{ display: 'flex', gap: 8 }}>
-          <input
-            className="field-input"
-            type="number"
-            inputMode="numeric"
-            min="0"
-            value={discountValue}
-            onChange={(e) => setDiscountValue(e.target.value)}
-            placeholder="0"
-            style={{ flex: 1 }}
-          />
-          <div className="segmented" style={{ maxWidth: 140 }}>
-            <button
-              type="button"
-              className={discountMode === 'yen' ? 'active' : ''}
-              onClick={() => setDiscountMode('yen')}
-            >
-              円
-            </button>
-            <button
-              type="button"
-              className={discountMode === 'percent' ? 'active' : ''}
-              onClick={() => setDiscountMode('percent')}
-            >
-              ％
-            </button>
-          </div>
-        </div>
-        {discountAmount > 0 && (
-          <div style={{ color: 'var(--color-text-muted)', fontSize: 13, marginTop: 6 }}>
-            割引額：¥{discountAmount.toLocaleString()}
-          </div>
-        )}
         <label
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 6,
-            marginTop: 8,
-            fontSize: 13,
-            color: 'var(--color-text-muted)',
+            justifyContent: 'space-between',
+            marginBottom: applyDiscount ? 12 : 0,
           }}
         >
-          <input
-            type="checkbox"
-            checked={showDiscountMemo}
-            onChange={(e) => setShowDiscountMemo(e.target.checked)}
-          />
-          備考を書く
+          <span className="field-label" style={{ marginBottom: 0 }}>
+            各種割引
+          </span>
+          <Toggle checked={applyDiscount} onChange={setApplyDiscount} />
         </label>
-        {showDiscountMemo && (
-          <textarea
-            className="field-input"
-            style={{ marginTop: 8, minHeight: 60 }}
-            value={discountMemo}
-            onChange={(e) => setDiscountMemo(e.target.value)}
-            placeholder="割引についての備考"
-          />
+        {applyDiscount && (
+          <>
+            {discountTypes.length > 1 ? (
+              <select
+                className="field-input"
+                style={{ marginBottom: 8 }}
+                value={discountTypeId}
+                onChange={(e) => setDiscountTypeId(e.target.value)}
+              >
+                {discountTypes.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}（{t.mode === 'percent' ? `${t.value}%` : `¥${t.value.toLocaleString()}`}）
+                  </option>
+                ))}
+              </select>
+            ) : discountTypes.length === 1 ? (
+              <div style={{ color: 'var(--color-text-muted)', fontSize: 13, marginBottom: 8 }}>
+                {discountTypes[0].name}（
+                {discountTypes[0].mode === 'percent'
+                  ? `${discountTypes[0].value}%`
+                  : `¥${discountTypes[0].value.toLocaleString()}`}
+                ）
+              </div>
+            ) : (
+              <p style={{ color: 'var(--color-text-muted)', fontSize: 13, marginBottom: 8 }}>
+                割引の種類が登録されていません。オーナーの「割引管理」から追加してください。
+              </p>
+            )}
+            {discountAmount > 0 && (
+              <div style={{ color: 'var(--color-text-muted)', fontSize: 13, marginBottom: 8 }}>
+                割引額：－¥{discountAmount.toLocaleString()}
+              </div>
+            )}
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 13,
+                color: 'var(--color-text-muted)',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={showDiscountMemo}
+                onChange={(e) => setShowDiscountMemo(e.target.checked)}
+              />
+              備考を書く
+            </label>
+            {showDiscountMemo && (
+              <textarea
+                className="field-input"
+                style={{ marginTop: 8, minHeight: 60 }}
+                value={discountMemo}
+                onChange={(e) => setDiscountMemo(e.target.value)}
+                placeholder="割引についての備考"
+              />
+            )}
+          </>
         )}
       </div>
 
