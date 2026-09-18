@@ -65,12 +65,33 @@ export default function SalesRecordForm({
 
   const [applyDiscount, setApplyDiscount] = useState(!!initial?.discountTypeId);
   const [discountTypeId, setDiscountTypeId] = useState(initial?.discountTypeId ?? '');
+  // 割引の％/円と数値は、編集時は保存済みの値をそのまま保持する（後日オーナーがプリセットの
+  // 割合・金額を変更しても、過去の記録の金額が勝手に書き換わらないようにするため）。
+  // 種類を選び直した時・新規作成時だけ、その時点のプリセット値を反映する。
+  const [discountMode, setDiscountMode] = useState<DiscountMode>(initial?.discountMode ?? 'yen');
+  const [discountRawValue, setDiscountRawValue] = useState(initial?.discountValue ?? 0);
   const [showDiscountMemo, setShowDiscountMemo] = useState(!!initial?.discountMemo);
   const [discountMemo, setDiscountMemo] = useState(initial?.discountMemo ?? '');
 
   useEffect(() => {
-    if (!discountTypeId && discountTypes.length > 0) setDiscountTypeId(discountTypes[0].id);
-  }, [discountTypes, discountTypeId]);
+    if (!discountTypeId && discountTypes.length > 0) {
+      const first = discountTypes[0];
+      setDiscountTypeId(first.id);
+      if (!initial?.discountTypeId) {
+        setDiscountMode(first.mode);
+        setDiscountRawValue(first.value);
+      }
+    }
+  }, [discountTypes, discountTypeId, initial]);
+
+  function handleSelectDiscountType(id: string) {
+    setDiscountTypeId(id);
+    const t = discountTypes.find((dt) => dt.id === id);
+    if (t) {
+      setDiscountMode(t.mode);
+      setDiscountRawValue(t.value);
+    }
+  }
 
   const [nominated, setNominated] = useState(initial?.nominated ?? false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
@@ -85,9 +106,6 @@ export default function SalesRecordForm({
   const option = Number(optionAmount) || 0;
   const points = Number(pointsUsed) || 0;
   const subtotal = treatment + option;
-  const selectedDiscountType = discountTypes.find((t) => t.id === discountTypeId);
-  const discountMode: DiscountMode = selectedDiscountType?.mode ?? 'yen';
-  const discountRawValue = selectedDiscountType?.value ?? 0;
   const discountAmount = !applyDiscount
     ? 0
     : discountMode === 'percent'
@@ -287,7 +305,7 @@ export default function SalesRecordForm({
                 className="field-input"
                 style={{ marginBottom: 8 }}
                 value={discountTypeId}
-                onChange={(e) => setDiscountTypeId(e.target.value)}
+                onChange={(e) => handleSelectDiscountType(e.target.value)}
               >
                 {discountTypes.map((t) => (
                   <option key={t.id} value={t.id}>
