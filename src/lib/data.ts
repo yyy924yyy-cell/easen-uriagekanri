@@ -252,22 +252,37 @@ function computeDiscountAmount(input: NewSalesRecordInput, subtotal: number): nu
   return input.discountValue;
 }
 
+// FirestoreはフィールドにJSの`undefined`を受け付けず、その値を含むまま
+// addDoc/updateDocを呼ぶと保存処理自体がエラーになる（＝「保存できません」の原因）。
+// 割引未使用時はdiscountTypeId/discountMode/discountValueがundefinedになるため、
+// 書き込み直前にundefinedのキーを取り除いておく。
+function stripUndefined<T extends Record<string, unknown>>(obj: T): Partial<T> {
+  const result: Partial<T> = {};
+  for (const key of Object.keys(obj) as (keyof T)[]) {
+    if (obj[key] !== undefined) result[key] = obj[key];
+  }
+  return result;
+}
+
 export async function addSalesRecord(input: NewSalesRecordInput) {
   const subtotal = input.treatmentAmount + input.optionAmount;
   const discountAmount = computeDiscountAmount(input, subtotal);
   const totalAmount = subtotal - discountAmount;
   const paymentAmount = totalAmount - input.pointsUsed;
-  await addDoc(collection(db, 'salesRecords'), {
-    ...input,
-    treatmentMemo: input.treatmentMemo ?? '',
-    optionMemo: input.optionMemo ?? '',
-    discountMemo: input.discountMemo ?? '',
-    discountAmount,
-    totalAmount,
-    paymentAmount,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
+  await addDoc(
+    collection(db, 'salesRecords'),
+    stripUndefined({
+      ...input,
+      treatmentMemo: input.treatmentMemo ?? '',
+      optionMemo: input.optionMemo ?? '',
+      discountMemo: input.discountMemo ?? '',
+      discountAmount,
+      totalAmount,
+      paymentAmount,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+  );
 }
 
 export async function updateSalesRecord(
@@ -279,13 +294,20 @@ export async function updateSalesRecord(
   const totalAmount = subtotal - discountAmount;
   const paymentAmount = totalAmount - input.pointsUsed;
   await updateDoc(doc(db, 'salesRecords', id), {
-    ...input,
-    treatmentMemo: input.treatmentMemo ?? '',
-    optionMemo: input.optionMemo ?? '',
-    discountMemo: input.discountMemo ?? '',
-    discountAmount,
-    totalAmount,
-    paymentAmount,
+    ...stripUndefined({
+      ...input,
+      treatmentMemo: input.treatmentMemo ?? '',
+      optionMemo: input.optionMemo ?? '',
+      discountMemo: input.discountMemo ?? '',
+      discountAmount,
+      totalAmount,
+      paymentAmount,
+    }),
+    // 割引を解除した場合など、undefinedを渡すだけでは既存フィールドが
+    // 消えないため、割引未使用時は明示的にフィールドごと削除する。
+    ...(input.discountTypeId === undefined ? { discountTypeId: deleteField() } : {}),
+    ...(input.discountMode === undefined ? { discountMode: deleteField() } : {}),
+    ...(input.discountValue === undefined ? { discountValue: deleteField() } : {}),
     updatedAt: serverTimestamp(),
   });
 }
